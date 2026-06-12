@@ -30,6 +30,9 @@ export const users = pgTable('users', {
   passwordHash: text('password_hash').notNull(),
   role: text('role').notNull(), // 'admin' | 'owner' | 'sales' | 'warehouse'
   dealerId: integer('dealer_id').references(() => dealers.id), // nullable
+  // Phase G — User Management. Deactivated users keep their history but cannot
+  // log in (login.post.ts rejects active=false). Defaults true for old rows.
+  active: boolean('active').notNull().default(true),
   createdAt: text('created_at').notNull(),
 })
 
@@ -102,6 +105,11 @@ export const orders = pgTable('orders', {
   invoiceNo: text('invoice_no'), // Phase C — INV-2026-###### issued at order time
   trackingNo: text('tracking_no'),
   carrier: text('carrier'), // 'Flash' | 'SCG'
+  // Phase G — Accounts Receivable. amountPaid accumulates posted payments;
+  // paymentStatus is derived ('unpaid' | 'partial' | 'paid'). Both default so
+  // existing rows read as unpaid with 0 paid.
+  amountPaid: integer('amount_paid').notNull().default(0),
+  paymentStatus: text('payment_status').notNull().default('unpaid'),
   createdAt: text('created_at').notNull(),
 })
 
@@ -291,5 +299,32 @@ export const notifications = pgTable('notifications', {
   entityId: text('entity_id'), // PO / CLM / RMA number
   status: text('status').notNull(), // 'sent' | 'failed' | 'read'
   readAt: text('read_at'), // nullable ISO — only meaningful for inapp rows
+  createdAt: text('created_at').notNull(),
+})
+
+// ============================================================================
+// Phase G — Payments / Accounts Receivable
+// ----------------------------------------------------------------------------
+// A payment is money received from a dealer, optionally applied to a specific
+// order. Posting a payment runs in one transaction: insert the payment row,
+// add to orders.amountPaid + recompute orders.paymentStatus (when orderId is
+// set), and RELEASE the dealer's credit (creditUsed = max(0, creditUsed −
+// amount)). This is the missing half of the credit lifecycle — orders consume
+// credit on create, returns/cancels release it on goods movement, and payments
+// release it on settlement. amount is THB (integer).
+// ============================================================================
+export const payments = pgTable('payments', {
+  id: serial('id').primaryKey(),
+  receiptNo: text('receipt_no').notNull().unique(), // RCP-2026-######
+  dealerId: integer('dealer_id')
+    .notNull()
+    .references(() => dealers.id),
+  orderId: integer('order_id').references(() => orders.id), // nullable — on-account payment
+  amount: integer('amount').notNull(), // THB
+  method: text('method').notNull(), // 'transfer' | 'cash' | 'cheque' | 'card'
+  reference: text('reference'), // bank ref / cheque no (nullable)
+  note: text('note'), // nullable
+  receivedAt: text('received_at').notNull(), // ISO — when funds were received
+  createdBy: integer('created_by').references(() => users.id), // nullable — admin/owner who posted
   createdAt: text('created_at').notNull(),
 })

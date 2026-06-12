@@ -12,6 +12,8 @@ export type OrderStatus = 'pending' | 'confirming' | 'packing' | 'shipped' | 'de
 export type ClaimStatus = 'submitted' | 'reviewing' | 'rejected' | 'approved'
 export type ReturnStatus = 'requested' | 'approved' | 'rejected'
 export type VinStatus = 'installed' | 'pending' | 'not_installed'
+export type PaymentStatus = 'unpaid' | 'partial' | 'paid' // Phase G — AR
+export type PaymentMethod = 'transfer' | 'cash' | 'cheque' | 'card' // Phase G
 export type PartCategory = 'กรอง' | 'เบรก' | 'อุปกรณ์' | 'ไฟ' | 'ช่วงล่าง' | 'ไฟฟ้า'
 export type Warehouse = 'คลังกรุงเทพ' | 'คลังเชียงใหม่'
 
@@ -33,6 +35,7 @@ export interface User {
   email: string
   role: Role
   dealerId: number | null
+  active: boolean // Phase G — deactivated users cannot log in
   createdAt: string
 }
 
@@ -92,6 +95,8 @@ export interface Order {
   invoiceNo: string | null
   trackingNo: string | null
   carrier: string | null
+  amountPaid: number // Phase G — accumulated posted payments
+  paymentStatus: PaymentStatus // Phase G — derived: unpaid | partial | paid
   createdAt: string
 }
 
@@ -133,6 +138,21 @@ export interface ReturnItem {
   partId: number
   qty: number
   unitPrice: number
+}
+
+// ---- payment (Phase G — Accounts Receivable) -------------------------------
+export interface Payment {
+  id: number
+  receiptNo: string
+  dealerId: number
+  orderId: number | null
+  amount: number
+  method: PaymentMethod
+  reference: string | null
+  note: string | null
+  receivedAt: string
+  createdBy: number | null
+  createdAt: string
 }
 
 // ---- session shape returned by GET /api/auth/me ----------------------------

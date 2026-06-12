@@ -4,7 +4,7 @@
 // SHARED FILE — owned by the SA. Used everywhere (StatusBadge, tables, Kanban).
 // Add new statuses here, never inline Thai strings in components.
 // ============================================================================
-import type { OrderStatus, ClaimStatus, VinStatus, ReturnStatus, Grade } from '~/types'
+import type { OrderStatus, ClaimStatus, VinStatus, ReturnStatus, Grade, PaymentStatus } from '~/types'
 
 // Order workflow (also drives the fulfillment Kanban column order).
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
@@ -37,6 +37,13 @@ export const RETURN_STATUS_LABELS: Record<ReturnStatus, string> = {
   requested: 'รออนุมัติคืน',
   approved: 'อนุมัติคืน',
   rejected: 'ปฏิเสธคืน',
+}
+
+// Payment / AR status labels (Phase G).
+export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  unpaid: 'ยังไม่ชำระ',
+  partial: 'ชำระบางส่วน',
+  paid: 'ชำระครบ',
 }
 
 export const VIN_STATUS_LABELS: Record<VinStatus, string> = {
@@ -74,6 +81,10 @@ export const STATUS_TONE: Record<string, string> = {
   approved: 'bg-emerald-500/15 text-emerald-400',
   // returns / RMA
   requested: 'bg-amber-500/15 text-amber-400',
+  // payments / AR
+  unpaid: 'bg-rose-500/15 text-rose-400',
+  partial: 'bg-amber-500/15 text-amber-400',
+  paid: 'bg-emerald-500/15 text-emerald-400',
   // vins
   installed: 'bg-emerald-500/15 text-emerald-400',
   not_installed: 'bg-rose-500/15 text-rose-400',
@@ -86,6 +97,7 @@ export function statusLabel(status: string): string {
     CLAIM_STATUS_LABELS[status as ClaimStatus] ??
     VIN_STATUS_LABELS[status as VinStatus] ??
     RETURN_STATUS_LABELS[status as ReturnStatus] ??
+    PAYMENT_STATUS_LABELS[status as PaymentStatus] ??
     status
   )
 }

@@ -83,6 +83,14 @@ export async function startServer(): Promise<string> {
   // Phase F — hardening
   const health = (await import('../../server/api/health.get')).default
   const seedDemo = (await import('../../server/api/auth/seed-demo.post')).default
+  // Phase G — payments / AR + user management
+  const paymentsGet = (await import('../../server/api/payments/index.get')).default
+  const paymentsPost = (await import('../../server/api/payments/index.post')).default
+  const rptArAging = (await import('../../server/api/reports/ar-aging.get')).default
+  const usersGet = (await import('../../server/api/users/index.get')).default
+  const usersPost = (await import('../../server/api/users/index.post')).default
+  const usersPut = (await import('../../server/api/users/[id].put')).default
+  const usersResetPassword = (await import('../../server/api/users/[id]/reset-password.post')).default
 
   router.post('/api/auth/login', eventHandler(login))
   router.post('/api/auth/logout', eventHandler(logout))
@@ -130,6 +138,14 @@ export async function startServer(): Promise<string> {
   // Phase F — hardening
   router.get('/api/health', eventHandler(health))
   router.post('/api/auth/seed-demo', eventHandler(seedDemo))
+  // Phase G — payments / AR + user management
+  router.get('/api/payments', eventHandler(paymentsGet))
+  router.post('/api/payments', eventHandler(paymentsPost))
+  router.get('/api/reports/ar-aging', eventHandler(rptArAging))
+  router.get('/api/users', eventHandler(usersGet))
+  router.post('/api/users', eventHandler(usersPost))
+  router.put('/api/users/:id', eventHandler(usersPut))
+  router.post('/api/users/:id/reset-password', eventHandler(usersResetPassword))
 
   app.use(router)
 

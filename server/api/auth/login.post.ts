@@ -36,6 +36,13 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' })
   }
 
+  // Phase G: a deactivated account authenticates but is denied entry. Counts as
+  // a failure for rate-limiting; never reveals whether the password was right.
+  if (user.active === false) {
+    recordFailure(rlKey, LOGIN_WINDOW_MS)
+    throw createError({ statusCode: 403, statusMessage: 'บัญชีนี้ถูกระงับการใช้งาน' })
+  }
+
   clearRateLimit(rlKey)
   await createSession(event, user.id)
 

@@ -151,7 +151,7 @@ async function onSeed() {
 
     <!-- ── Right: login + demo cards ──────────────────────────────────────── -->
     <div class="flex items-center justify-center bg-app p-6 md:p-10">
-      <div class="w-full max-w-md space-y-5">
+      <div class="w-full max-w-md space-y-6">
         <!-- login card -->
         <div class="rounded-2xl border border-app bg-surface p-6 md:p-8">
           <h2 class="text-2xl font-bold text-app">{{ t('auth.login.title') }}</h2>
@@ -202,11 +202,14 @@ async function onSeed() {
               v-for="a in demoAccounts"
               :key="a.email"
               type="button"
-              class="group relative overflow-hidden rounded-xl bg-gradient-to-br p-3 text-left text-white shadow-sm transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-              :class="ROLE_UI[a.role].gradient"
+              :aria-pressed="email === a.email"
+              class="group relative overflow-hidden rounded-xl bg-gradient-to-br p-3.5 text-left text-white shadow-sm transition hover:brightness-110 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+              :class="email === a.email
+                ? [ROLE_UI[a.role].gradient, 'ring-2 ring-white shadow-lg shadow-black/30']
+                : [ROLE_UI[a.role].gradient, 'opacity-90 hover:opacity-100']"
               @click="pick(a.email)"
             >
-              <span class="grid h-7 w-7 place-items-center rounded-lg bg-white/20">
+              <span class="grid h-9 w-9 place-items-center rounded-lg bg-white/20">
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -214,14 +217,25 @@ async function onSeed() {
                   stroke-width="2"
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  class="h-4 w-4"
+                  class="h-5 w-5"
                   aria-hidden="true"
                 >
                   <path v-for="(d, i) in ROLE_UI[a.role].icon" :key="i" :d="d" />
                 </svg>
               </span>
-              <p class="mt-2 text-xs font-bold">{{ t('auth.role.' + a.role) }}</p>
-              <p class="code text-[10px] text-white/80">{{ a.email }}</p>
+              <p class="mt-2.5 text-sm font-bold">{{ t('auth.role.' + a.role) }}</p>
+              <p class="code text-[11px] text-white/85">{{ a.email }}</p>
+
+              <!-- selected check -->
+              <span
+                v-if="email === a.email"
+                class="absolute right-2.5 top-2.5 grid h-5 w-5 place-items-center rounded-full bg-white text-brand-700"
+                aria-hidden="true"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3">
+                  <path d="m5 12 4 4L19 7" />
+                </svg>
+              </span>
             </button>
           </div>
         </div>

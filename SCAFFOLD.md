@@ -95,7 +95,8 @@ These define cross-module contracts. If a module needs a change, note it here an
 ping the SA — do not silently edit.
 
 - `server/db/schema.ts` — Drizzle tables (dealers, users, vins, parts, inventory,
-  orders, orderItems, claims, sessions)
+  orders, orderItems, claims, sessions, payments). Phase G added: `payments`
+  table, `orders.amountPaid` + `orders.paymentStatus`, `users.active`.
 - `server/db/index.ts` — db client
 - `server/db/seed-data.ts` + `server/db/seed.ts` — seed dataset
 - `server/utils/auth.ts` — `requireUser(event, roles?)`, session helpers
@@ -148,6 +149,19 @@ Owns / edits:
 - `server/api/dealers/index.get.ts`
 - `app/locales/th.ts`, `app/locales/en.ts` (expand dictionaries)
 - theme polish in `app/assets/css/main.css` (coordinate via SA if structural)
+
+### Phase G — Payments / AR + User Management (post-launch)
+Owns / edits:
+- `app/pages/payments.vue` — record-payment form (admin/owner) + receipt history
+- `app/pages/users.vue` — admin user directory + create/edit/reset-password
+- `server/api/payments/index.get.ts` (dealer-scoped, fails closed),
+  `server/api/payments/index.post.ts` (admin/owner; releases dealer credit in a txn)
+- `server/api/reports/ar-aging.get.ts` (admin-only AR aging buckets)
+- `server/api/users/index.get.ts`, `index.post.ts`, `[id].put.ts`,
+  `[id]/reset-password.post.ts` (all admin-only; password hash never serialized)
+- consumed contract change: `server/api/auth/login.post.ts` rejects `active === false`
+- Credit lifecycle note: orders consume credit on create; cancels/returns release
+  on goods movement; **payments release it on settlement** (`creditUsed = GREATEST(0, …)`).
 
 ## Conventions to follow
 - Every protected API route starts with `await requireUser(event, [roles])`.
