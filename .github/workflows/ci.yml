@@ -1,0 +1,87 @@
+# ============================================================================
+# CI quality gate — runs the same three checks we require before merge:
+#   typecheck (vue-tsc) · lint (eslint, zero warnings) · test (vitest).
+#
+# The server integration tests hit a REAL Postgres, so we spin one up as a
+# service container, apply migrations the same way production does
+# (`db:deploy` → server/db/migrate.mjs), then seed the deterministic demo data
+# before `vitest run`. DATABASE_URL points every script at that container.
+# ============================================================================
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel superseded runs on the same ref so a fast PR push doesn't queue behind
+# an outdated run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+
+    # Postgres for the integration tests. Credentials/db name mirror
+    # docker-compose.yml; the host port is the standard 5432 (the local dev DB
+    # uses 5434 only to avoid colliding with another project).
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: dealerportal
+          POSTGRES_PASSWORD: dealerportal
+          POSTGRES_DB: dealerportal
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dealerportal"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      # All db scripts and the test harness read DATABASE_URL first.
+      DATABASE_URL: postgres://dealerportal:dealerportal@localhost:5432/dealerportal
+      # The server refuses to boot in production without a real secret; CI is
+      # not production, so a throwaway value is fine here.
+      NUXT_SESSION_SECRET: ci-throwaway-session-secret-not-for-production
+      NODE_ENV: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.4.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # `postinstall` runs `nuxt prepare`, which generates .nuxt/eslint.config.mjs
+      # (consumed by eslint.config.mjs) and the type shims (consumed by typecheck).
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      # Apply migrations exactly as the production container does on boot.
+      - name: Apply database migrations
+        run: pnpm db:deploy
+
+      - name: Seed database
+        run: pnpm db:seed
+
+      - name: Test
+        run: pnpm test

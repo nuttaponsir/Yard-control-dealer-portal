@@ -1,0 +1,28 @@
+# Build context hygiene — keep the image small and the build deterministic.
+node_modules
+.output
+.nuxt
+.nitro
+.data
+dist
+
+# Local env / secrets — never bake into the image (passed at runtime instead).
+.env
+.env.*
+!.env.example
+
+# VCS / editor / OS cruft
+.git
+.gitignore
+.vscode
+.idea
+*.log
+.DS_Store
+
+# Tests and docs are not needed in the runtime image
+tests
+*.md
+coverage
+
+# Stray temp scripts
+scripts_tmp_*

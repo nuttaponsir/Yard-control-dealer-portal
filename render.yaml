@@ -1,0 +1,44 @@
+# ============================================================================
+# Render Blueprint (Infrastructure-as-Code) — one-click deploy of the
+# Mitsubishi Dealer Portal: a Dockerized Nuxt SSR web service + managed Postgres.
+# ----------------------------------------------------------------------------
+# How to use:
+#   1. Push this repo to GitHub/GitLab.
+#   2. Render dashboard → "New +" → "Blueprint" → pick the repo.
+#   3. Render reads this file, provisions the database, builds the Dockerfile,
+#      injects DATABASE_URL + a generated session secret, and deploys.
+# On every deploy the container entrypoint runs `node server/db/migrate.mjs`
+# (idempotent) before starting the server, so the schema is always current.
+# After the first deploy, seed the DB once (ops task) — see SCAFFOLD.md.
+# ============================================================================
+services:
+  - type: web
+    name: dealer-portal
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    # Free tier to start; switch to "starter" for an always-on instance.
+    plan: free
+    region: singapore           # closest Render region to TH; move app + db together
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render generates a strong random value and keeps it stable across deploys.
+      - key: NUXT_SESSION_SECRET
+        generateValue: true
+      # Internal connection string from the managed DB below (no SSL needed —
+      # app and DB share Render's private network).
+      - key: DATABASE_URL
+        fromDatabase:
+          name: dealer-portal-db
+          property: connectionString
+
+databases:
+  - name: dealer-portal-db
+    # NOTE: Render's free Postgres is deleted ~30 days after creation. For real
+    # production use a paid plan (e.g. "basic-256mb" or larger).
+    plan: free
+    region: singapore
+    databaseName: dealerportal
+    user: dealerportal

@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: dealerportal-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dealerportal
+      POSTGRES_PASSWORD: dealerportal
+      POSTGRES_DB: dealerportal
+    ports:
+      - "5434:5432"
+    volumes:
+      - dealerportal-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dealerportal -d dealerportal"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Production app image. Builds the Nuxt/Nitro server, runs DB migrations on
+  # boot (idempotent), then serves on :3000. Override NUXT_SESSION_SECRET — the
+  # server refuses to start in production with the dev default.
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dealerportal-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      # Use the in-network DB host/port (5432), not the host-mapped 5434.
+      DATABASE_URL: postgres://dealerportal:dealerportal@db:5432/dealerportal
+      NUXT_SESSION_SECRET: ${NUXT_SESSION_SECRET:?set a strong NUXT_SESSION_SECRET}
+    ports:
+      - "3000:3000"
+
+volumes:
+  dealerportal-pgdata:
