@@ -129,7 +129,8 @@ const prettyDetail = computed(() => {
 
     <AppCard :title="t('issues.list.title')">
       <template #actions>
-        <div class="flex flex-wrap gap-1.5">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <DataPorter :export-url="'/api/issues/export'" :export-filename="'issues.xlsx'" />
           <button
             class="rounded-lg px-2.5 py-1 text-xs font-semibold transition"
             :class="statusFilter === null ? 'bg-brand-600 text-white' : 'bg-surface-2 text-muted hover:text-app'"

@@ -220,6 +220,14 @@ export function getMaster(entity: string): MasterDef {
   return def
 }
 
+/** The create-schema field keys for a master (used to build import templates). */
+export function masterColumns(def: MasterDef): string[] {
+  // Zod v3 ZodObject exposes `.shape`; guard in case a schema isn't an object.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const shape = (def.create as any)?.shape as Record<string, unknown> | undefined
+  return shape ? Object.keys(shape) : []
+}
+
 /** Guard mutating routes: derived masters are read-only. */
 export function assertEditable(entity: string, def: MasterDef): void {
   if (!def.editable) {

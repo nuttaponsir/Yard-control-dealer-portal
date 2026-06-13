@@ -282,6 +282,20 @@ export const en: Record<string, string> = {
   'masters.field.active': 'Active',
   'masters.col.actions': 'Actions',
 
+  // ---- Excel import/export (Phase K) ----
+  'porter.export': 'Export Excel',
+  'porter.import': 'Import Excel',
+  'porter.importHint': 'Pick an .xlsx whose column headers match the field names. Rows are validated before saving.',
+  'porter.checkFile': 'Check file',
+  'porter.confirmImport': 'Import {n} rows',
+  'porter.importDone': 'Imported {n} rows',
+  'porter.exportError': 'Export failed',
+  'porter.importError': 'Import failed',
+  'porter.total': 'Total',
+  'porter.valid': 'Valid',
+  'porter.invalid': 'Invalid',
+  'porter.rowLabel': 'Row {n}',
+
   // ---- reports (Phase D) ----
   'page.reports.title': 'Reports & Analytics',
   'page.reports.subtitle': 'Sales, stock, finance and claims insights',

@@ -234,6 +234,9 @@ async function submitRequest() {
 
     <!-- returns list -->
     <AppCard :title="t('returns.list.title')">
+      <template #actions>
+        <DataPorter :export-url="'/api/returns/export'" :export-filename="'returns.xlsx'" />
+      </template>
       <EmptyState v-if="!rows.length" icon="↩" :title="t('returns.list.empty')" />
       <template v-else>
         <p v-if="decisionError" class="mb-3 text-xs text-rose-400">{{ decisionError }}</p>

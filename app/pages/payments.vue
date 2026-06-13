@@ -200,6 +200,9 @@ async function submit() {
 
     <!-- payments list -->
     <AppCard :title="t('payments.list.title')">
+      <template #actions>
+        <DataPorter :export-url="'/api/payments/export'" :export-filename="'payments.xlsx'" />
+      </template>
       <EmptyState v-if="!payments.length" icon="💰" :title="t('payments.list.empty')" />
       <DataTable v-else :columns="columns" :rows="payments">
         <template #cell-amount="{ value }">{{ thb(value) }}</template>

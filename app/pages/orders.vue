@@ -30,6 +30,9 @@ function thaiDate(iso: string): string {
 
 <template>
   <AppCard :title="t('page.orders.title')" :subtitle="t('page.orders.subtitle')">
+    <template #actions>
+      <DataPorter :export-url="'/api/orders/export'" :export-filename="'orders.xlsx'" />
+    </template>
     <DataTable :columns="columns" :rows="rows">
       <template #cell-status="{ value }">
         <StatusBadge :status="value" />

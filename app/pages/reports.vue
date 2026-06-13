@@ -2,7 +2,8 @@
 // /reports — Reporting & Analytics (Phase D). Admin-only.
 // Tabbed, read-only views over the GET /api/reports/* endpoints. Each report
 // declares the array field to table-render plus its columns + formatting; a few
-// also surface scalar summary chips. Charts / Excel-PDF export are future work.
+// also surface scalar summary chips. Excel export (sales-by-dealer rollup) is
+// available via the toolbar; charts / PDF export are future work.
 import { thb } from '~/utils/labels'
 
 const { t } = useI18n()
@@ -293,6 +294,9 @@ const summaryChips = computed(() => {
     </AppCard>
 
     <AppCard :title="t(activeReport.labelKey)">
+      <template #actions>
+        <DataPorter :export-url="'/api/reports/export'" :export-filename="'reports.xlsx'" />
+      </template>
       <div v-if="summaryChips.length" class="mb-4 flex flex-wrap gap-2">
         <span
           v-for="(chip, i) in summaryChips"

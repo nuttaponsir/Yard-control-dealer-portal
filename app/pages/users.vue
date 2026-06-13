@@ -176,7 +176,10 @@ async function submitReset() {
   <div class="space-y-5">
     <AppCard :title="t('users.list.title')">
       <template #actions>
-        <AppButton size="sm" @click="openCreate">{{ t('users.action.add') }}</AppButton>
+        <div class="flex flex-wrap items-center gap-2">
+          <DataPorter :export-url="'/api/users/export'" :export-filename="'users.xlsx'" />
+          <AppButton size="sm" @click="openCreate">{{ t('users.action.add') }}</AppButton>
+        </div>
       </template>
 
       <EmptyState v-if="!users.length" icon="👤" :title="t('users.list.empty')" />

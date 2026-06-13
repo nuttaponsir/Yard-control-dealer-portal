@@ -140,6 +140,9 @@ function fmtDate(iso: string) {
 
     <!-- RIGHT: recent claims -->
     <AppCard :title="t('claims.recent.title')">
+      <template #actions>
+        <DataPorter :export-url="'/api/claims/export'" :export-filename="'claims.xlsx'" />
+      </template>
       <EmptyState v-if="!claims.length" icon="🛡" :title="t('claims.recent.empty')" />
       <div v-else class="max-h-[70vh] space-y-3 overflow-y-auto pr-1">
         <article

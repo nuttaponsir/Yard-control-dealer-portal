@@ -83,7 +83,7 @@ const packShip = computed(() => allCards.value.filter((c) => c.status === 'packi
 <template>
   <div class="space-y-5">
     <!-- tab bar -->
-    <div class="flex flex-wrap gap-1.5 rounded-xl border border-app bg-surface p-1.5">
+    <div class="flex flex-wrap items-center gap-1.5 rounded-xl border border-app bg-surface p-1.5">
       <button
         v-for="tb in tabs"
         :key="tb.key"
@@ -93,6 +93,9 @@ const packShip = computed(() => allCards.value.filter((c) => c.status === 'packi
       >
         {{ tb.label }}
       </button>
+      <div class="ml-auto">
+        <DataPorter :export-url="'/api/warehouse/export'" :export-filename="'warehouse.xlsx'" />
+      </div>
     </div>
 
     <!-- BOARD -->

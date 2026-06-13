@@ -340,15 +340,23 @@ const referenceTabs = computed(() => TABS.filter((tabb) => !tabb.editable))
     <!-- Active master table -->
     <AppCard :title="t(activeTab.labelKey)">
       <template #actions>
-        <AppButton v-if="activeTab.editable" size="sm" @click="openCreate">
-          + {{ t('masters.action.add') }}
-        </AppButton>
-        <span
-          v-else
-          class="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] text-muted"
-        >
-          {{ t('masters.group.reference') }}
-        </span>
+        <div class="flex flex-wrap items-center gap-2">
+          <DataPorter
+            :export-url="`/api/masters/${activeEntity}/export`"
+            :export-filename="`${activeEntity}.xlsx`"
+            :import-url="activeTab.editable ? `/api/masters/${activeEntity}/import` : undefined"
+            @imported="load"
+          />
+          <AppButton v-if="activeTab.editable" size="sm" @click="openCreate">
+            + {{ t('masters.action.add') }}
+          </AppButton>
+          <span
+            v-else
+            class="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] text-muted"
+          >
+            {{ t('masters.group.reference') }}
+          </span>
+        </div>
       </template>
 
       <p v-if="!activeTab.editable" class="mb-3 text-xs text-muted">

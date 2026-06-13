@@ -114,11 +114,14 @@ async function checkout() {
     <div v-else class="grid gap-5 lg:grid-cols-[1fr_340px]">
       <!-- catalog -->
       <div class="space-y-4">
-        <div>
-          <h2 class="text-lg font-bold text-app">{{ t('catalog.title') }}</h2>
-          <p class="mt-0.5 text-sm text-muted">
-            <template v-if="vehicleLabel">{{ t('catalog.forModel') }} {{ vehicleLabel }} — </template>VIN <span class="code">{{ vin }}</span>
-          </p>
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-app">{{ t('catalog.title') }}</h2>
+            <p class="mt-0.5 text-sm text-muted">
+              <template v-if="vehicleLabel">{{ t('catalog.forModel') }} {{ vehicleLabel }} — </template>VIN <span class="code">{{ vin }}</span>
+            </p>
+          </div>
+          <DataPorter :export-url="'/api/parts/export'" :export-filename="'catalog.xlsx'" />
         </div>
 
         <!-- category chips -->

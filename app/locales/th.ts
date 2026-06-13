@@ -283,6 +283,20 @@ export const th: Record<string, string> = {
   'masters.field.active': 'เปิดใช้งาน',
   'masters.col.actions': 'จัดการ',
 
+  // ---- Excel import/export (Phase K) ----
+  'porter.export': 'ส่งออก Excel',
+  'porter.import': 'นำเข้า Excel',
+  'porter.importHint': 'เลือกไฟล์ .xlsx ที่มีหัวคอลัมน์ตรงกับชื่อฟิลด์ ระบบจะตรวจสอบก่อนบันทึก',
+  'porter.checkFile': 'ตรวจสอบไฟล์',
+  'porter.confirmImport': 'ยืนยันนำเข้า {n} รายการ',
+  'porter.importDone': 'นำเข้าสำเร็จ {n} รายการ',
+  'porter.exportError': 'ส่งออกไม่สำเร็จ',
+  'porter.importError': 'นำเข้าไม่สำเร็จ',
+  'porter.total': 'ทั้งหมด',
+  'porter.valid': 'ผ่าน',
+  'porter.invalid': 'ไม่ผ่าน',
+  'porter.rowLabel': 'แถวที่ {n}',
+
   // ---- reports (Phase D) ----
   'page.reports.title': 'รายงานและการวิเคราะห์',
   'page.reports.subtitle': 'สรุปยอดขาย สต็อก การเงิน และเคลม',
