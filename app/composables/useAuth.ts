@@ -29,7 +29,14 @@ export function useAuth() {
 
   /** Fetch the current session (used by middleware on first load). */
   async function fetchMe() {
-    const { user: u } = await $fetch<{ user: SessionUser | null }>('/api/auth/me')
+    // useRequestFetch() forwards the incoming request's cookies during SSR.
+    // Plain $fetch does NOT, so on a full page load the server-side session
+    // check would see no cookie, return null, and the global middleware would
+    // SSR-redirect an authenticated user to /auth — then the client bounces
+    // back to the page, leaving the auth layout's root class stuck on the
+    // default layout (the "stacked sidebar" rendering bug).
+    const requestFetch = useRequestFetch()
+    const { user: u } = await requestFetch<{ user: SessionUser | null }>('/api/auth/me')
     user.value = u
     return u
   }
