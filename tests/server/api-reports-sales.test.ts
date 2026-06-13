@@ -9,6 +9,26 @@ import { db } from '../../server/db'
 const LIVE = (s: string) => s !== 'cancelled'
 const OPEN = new Set(['pending', 'confirming', 'packing'])
 
+// Shared seed DB: another process can write to `orders` between our API call
+// and the independent recompute, which would make the counts disagree by a few
+// (a flaky off-by-one). Re-read `orders` on both sides of the API call and only
+// trust the pair when the table didn't change in that window (retry otherwise).
+// The returned `orders` snapshot is the one the recompute MUST be derived from;
+// any order-items belonging to orders outside this snapshot are filtered out by
+// the per-test `live` set, so the comparison stays internally consistent.
+type OrderRow = Awaited<ReturnType<typeof db.query.orders.findMany>>[number]
+async function readStable<T>(callApi: () => Promise<T>): Promise<{ api: T; orders: OrderRow[] }> {
+  const sig = (os: OrderRow[]) =>
+    os.map((o) => `${o.id}:${o.status}:${o.totalValue}`).sort().join('|')
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const before = await db.query.orders.findMany()
+    const api = await callApi()
+    const after = await db.query.orders.findMany()
+    if (sig(before) === sig(after)) return { api, orders: after }
+  }
+  throw new Error('orders table kept mutating during the report read (concurrent writer)')
+}
+
 beforeAll(async () => {
   await startServer()
 })
@@ -19,12 +39,13 @@ afterAll(async () => {
 describe('GET /api/reports/sales-by-dealer (R-S1)', () => {
   it('matches an independent per-dealer rollup of non-cancelled orders', async () => {
     const admin = await loginAs('admin@demo.co')
-    const r = await admin.get<{ rows: Array<{ dealerId: number; code: string; orderCount: number; totalSales: number }> }>(
-      '/api/reports/sales-by-dealer',
+    const { api: r, orders } = await readStable(() =>
+      admin.get<{ rows: Array<{ dealerId: number; code: string; orderCount: number; totalSales: number }> }>(
+        '/api/reports/sales-by-dealer',
+      ),
     )
     expect(r.status).toBe(200)
 
-    const orders = await db.query.orders.findMany()
     const dealers = await db.query.dealers.findMany()
     const dealerById = new Map(dealers.map((d) => [d.id, d]))
 
@@ -60,12 +81,13 @@ describe('GET /api/reports/sales-by-dealer (R-S1)', () => {
 describe('GET /api/reports/sales-by-category (R-S2)', () => {
   it('matches an independent line-level rollup by parts.category', async () => {
     const admin = await loginAs('admin@demo.co')
-    const r = await admin.get<{ rows: Array<{ category: string; qty: number; revenue: number }> }>(
-      '/api/reports/sales-by-category',
+    const { api: r, orders } = await readStable(() =>
+      admin.get<{ rows: Array<{ category: string; qty: number; revenue: number }> }>(
+        '/api/reports/sales-by-category',
+      ),
     )
     expect(r.status).toBe(200)
 
-    const orders = await db.query.orders.findMany()
     const items = await db.query.orderItems.findMany()
     const parts = await db.query.parts.findMany()
     const live = new Set(orders.filter((o) => LIVE(o.status)).map((o) => o.id))
@@ -91,12 +113,13 @@ describe('GET /api/reports/sales-by-category (R-S2)', () => {
 describe('GET /api/reports/sales-by-region (R-S3)', () => {
   it('matches an independent per-region rollup via province→region', async () => {
     const admin = await loginAs('admin@demo.co')
-    const r = await admin.get<{ rows: Array<{ region: string; orderCount: number; totalSales: number }> }>(
-      '/api/reports/sales-by-region',
+    const { api: r, orders } = await readStable(() =>
+      admin.get<{ rows: Array<{ region: string; orderCount: number; totalSales: number }> }>(
+        '/api/reports/sales-by-region',
+      ),
     )
     expect(r.status).toBe(200)
 
-    const orders = await db.query.orders.findMany()
     const dealers = await db.query.dealers.findMany()
     const provinces = await db.query.provinces.findMany()
     const regionByProvince = new Map(provinces.map((p) => [p.name, p.region]))
@@ -123,13 +146,14 @@ describe('GET /api/reports/sales-by-region (R-S3)', () => {
 describe('GET /api/reports/open-orders-aging (R-S5)', () => {
   it('buckets + rows match an independent recompute of open orders', async () => {
     const admin = await loginAs('admin@demo.co')
-    const r = await admin.get<{
-      buckets: Array<{ bucket: string; count: number; value: number }>
-      rows: Array<{ id: number; daysOpen: number }>
-    }>('/api/reports/open-orders-aging')
+    const { api: r, orders } = await readStable(() =>
+      admin.get<{
+        buckets: Array<{ bucket: string; count: number; value: number }>
+        rows: Array<{ id: number; daysOpen: number }>
+      }>('/api/reports/open-orders-aging'),
+    )
     expect(r.status).toBe(200)
 
-    const orders = await db.query.orders.findMany()
     const open = orders.filter((o) => OPEN.has(o.status))
 
     // row count + id set must match exactly
@@ -154,13 +178,14 @@ describe('GET /api/reports/top-parts (R-S6)', () => {
   it('honors ?limit and ranks by qty / revenue from non-cancelled lines', async () => {
     const admin = await loginAs('admin@demo.co')
     const limit = 5
-    const r = await admin.get<{
-      topByQty: Array<{ partId: number; qty: number; sku: string }>
-      topByRevenue: Array<{ partId: number; revenue: number; sku: string }>
-    }>(`/api/reports/top-parts?limit=${limit}`)
+    const { api: r, orders } = await readStable(() =>
+      admin.get<{
+        topByQty: Array<{ partId: number; qty: number; sku: string }>
+        topByRevenue: Array<{ partId: number; revenue: number; sku: string }>
+      }>(`/api/reports/top-parts?limit=${limit}`),
+    )
     expect(r.status).toBe(200)
 
-    const orders = await db.query.orders.findMany()
     const items = await db.query.orderItems.findMany()
     const parts = await db.query.parts.findMany()
     const live = new Set(orders.filter((o) => LIVE(o.status)).map((o) => o.id))
