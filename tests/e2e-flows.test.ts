@@ -166,7 +166,7 @@ e2e('E2E: VIN gate (HTTP)', () => {
 
   it('AC-3.2/4.6: not-installed VIN reports autologicInstalled=false (gate blocks ordering)', async () => {
     const { client } = await login('sales@demo.co')
-    const { body } = await client.json('/api/vin/MMAJNATG10NH000009')
+    const { body } = await client.json('/api/vin/MMAJNATG1NH000009')
     expect(body.vin).toBeTruthy()
     expect(body.vin.autologicInstalled).toBe(false)
   })

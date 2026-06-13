@@ -226,7 +226,7 @@ export async function seedDatabase(): Promise<{
       firmware: 'v3.8.2', lastConnectedAt: iso(1), status: 'installed',
     },
     {
-      vin: 'MMOJNPHEV2RH000006', model: 'Outlander PHEV', modelYear: 2025, autologicInstalled: true,
+      vin: 'MMOJNPEV2RH000006', model: 'Outlander PHEV', modelYear: 2025, autologicInstalled: true,
       packageName: 'EV Telematics', deviceSerial: 'ALG-2025-E0455',
       installCenter: 'ศูนย์บริการ Autologic กรุงเทพ (สาขารัชดา)', installDate: iso(60),
       firmware: 'v4.1.0', lastConnectedAt: iso(0), status: 'installed',
@@ -238,19 +238,19 @@ export async function seedDatabase(): Promise<{
       firmware: 'v3.8.2', lastConnectedAt: iso(2), status: 'installed',
     },
     {
-      vin: 'MMAJNATG10NH000008', model: 'Attrage', modelYear: 2022, autologicInstalled: false,
+      vin: 'MMAJNATG1NH000008', model: 'Attrage', modelYear: 2022, autologicInstalled: false,
       packageName: null, deviceSerial: null, installCenter: null, installDate: null,
       firmware: null, lastConnectedAt: null, status: 'pending',
     },
     {
-      vin: 'MMAJNATG10NH000009', model: 'Attrage', modelYear: 2022, autologicInstalled: false,
+      vin: 'MMAJNATG1NH000009', model: 'Attrage', modelYear: 2022, autologicInstalled: false,
       packageName: null, deviceSerial: null, installCenter: null, installDate: null,
       firmware: null, lastConnectedAt: null, status: 'not_installed',
     },
   ])
 
   // ---- ~40 sample orders + items (mostly DLR0001, a few others) -----------
-  const installedVins = ['MMTJNKB40NH000001', 'MMBJNKS50PH000003', 'MMOJNPHEV2RH000006', 'MMTJNKB40NH000002']
+  const installedVins = ['MMTJNKB40NH000001', 'MMBJNKS50PH000003', 'MMOJNPEV2RH000006', 'MMTJNKB40NH000002']
   const skuList = insertedParts.map((p) => p.sku)
   const insertedOrders: (typeof schema.orders.$inferSelect)[] = []
   let orderCount = 0

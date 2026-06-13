@@ -7,7 +7,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { startServer, stopServer, loginAs } from './harness'
 
 const TRITON_VIN = 'MMTJNKB40NH000001' // seeded, autologicInstalled=true, model "Triton"
-const PHEV_VIN = 'MMOJNPHEV2RH000006' // seeded, model "Outlander PHEV"
+const PHEV_VIN = 'MMOJNPEV2RH000006' // seeded, model "Outlander PHEV"
 
 beforeAll(async () => {
   await startServer()
