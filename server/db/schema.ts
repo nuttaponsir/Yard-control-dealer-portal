@@ -328,3 +328,34 @@ export const payments = pgTable('payments', {
   createdBy: integer('created_by').references(() => users.id), // nullable — admin/owner who posted
   createdAt: text('created_at').notNull(),
 })
+
+// ============================================================================
+// Phase H — Issue tracker (auto error capture)
+// ----------------------------------------------------------------------------
+// Client-side error handlers (app/plugins/error-capture.client.ts) POST a row
+// here whenever an unhandled error, rejected promise, failed API call, or Vue
+// render error fires. Each row records WHAT broke (message/stack), WHERE
+// (module + page route), WHICH action triggered it (last button/link clicked,
+// or the failing endpoint), WHO hit it (userId/email from the session), and an
+// optional html2canvas SCREENSHOT (base64 data URL). New rows land as 'draft'
+// so a human triages them before they become real issues.
+// ============================================================================
+export const issues = pgTable('issues', {
+  id: serial('id').primaryKey(),
+  issueNumber: text('issue_number').notNull().unique(), // ISSUE-2026-######
+  title: text('title').notNull(),
+  module: text('module'), // ระบบ — logical area, derived from route (orders|payments|…)
+  page: text('page'), // หน้า — route path the user was on
+  action: text('action'), // ปุ่ม/การกระทำ — last clicked control label or failing endpoint
+  severity: text('severity').notNull().default('error'), // 'error' | 'warning' | 'info'
+  source: text('source').notNull(), // 'api' | 'unhandled' | 'rejection' | 'vue' | 'manual'
+  message: text('message').notNull(), // human-readable error message
+  stack: text('stack'), // nullable — JS stack / extra trace
+  detail: text('detail'), // nullable — JSON blob: {endpoint,method,status,userAgent,…}
+  screenshot: text('screenshot'), // nullable — base64 data URL (image/jpeg)
+  userId: integer('user_id').references(() => users.id), // ใครทำ — nullable (may be logged out)
+  userEmail: text('user_email'), // denormalised for display even if user is deleted
+  status: text('status').notNull().default('draft'), // 'draft'|'open'|'in_progress'|'resolved'|'closed'
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at'), // nullable — set on status change
+})

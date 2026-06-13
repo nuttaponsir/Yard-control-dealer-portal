@@ -289,3 +289,30 @@ export interface AuditLogEntry {
   detail: string | null
   createdAt: string
 }
+
+// ============================================================================
+// Phase H — Issue tracker (auto error capture)
+// ============================================================================
+export type IssueStatus = 'draft' | 'open' | 'in_progress' | 'resolved' | 'closed'
+export type IssueSeverity = 'error' | 'warning' | 'info'
+export type IssueSource = 'api' | 'unhandled' | 'rejection' | 'vue' | 'manual'
+
+export interface Issue {
+  id: number
+  issueNumber: string
+  title: string
+  module: string | null
+  page: string | null
+  action: string | null
+  severity: IssueSeverity
+  source: IssueSource
+  message: string
+  stack: string | null
+  detail: string | null
+  screenshot: string | null
+  userId: number | null
+  userEmail: string | null
+  status: IssueStatus
+  createdAt: string
+  updatedAt: string | null
+}

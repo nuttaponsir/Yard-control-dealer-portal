@@ -78,6 +78,79 @@ describe('Master CRUD API — create / update / delete (editable master)', () =>
   })
 })
 
+describe('Dealers master — CRUD + server-managed fields + FK-safe delete', () => {
+  it('creates a dealer (server stamps creditUsed=0 + createdAt), updates, then deletes it', async () => {
+    const admin = await loginAs('admin@demo.co')
+    const code = `DLR${Date.now() % 100000}`
+
+    const created = await admin.post('/api/masters/dealers', {
+      code,
+      name: 'ดีลเลอร์ทดสอบ',
+      province: 'กรุงเทพมหานคร',
+      phone: '021234567',
+      grade: 'B',
+      creditLimit: 500000,
+      // attempt to set server-managed fields — must be ignored
+      creditUsed: 999999,
+    })
+    expect([200, 201]).toContain(created.status)
+
+    const row = await db.query.dealers.findFirst({ where: eq(schema.dealers.code, code) })
+    expect(row).toBeTruthy()
+    expect(row!.creditUsed).toBe(0) // server-stamped, client value ignored
+    expect(row!.createdAt).toBeTruthy()
+    const id = row!.id
+
+    const updated = await admin.put(`/api/masters/dealers/${id}`, { creditLimit: 750000 })
+    expect(updated.status).toBe(200)
+    const after = await db.query.dealers.findFirst({ where: eq(schema.dealers.id, id) })
+    expect(after!.creditLimit).toBe(750000)
+
+    const del = await admin.delete(`/api/masters/dealers/${id}`)
+    expect([200, 204]).toContain(del.status)
+    const gone = await db.query.dealers.findFirst({ where: eq(schema.dealers.id, id) })
+    expect(gone).toBeFalsy()
+  })
+
+  it('refuses to delete a dealer that still has an order (409)', async () => {
+    const admin = await loginAs('admin@demo.co')
+    const code = `DLR${(Date.now() + 1) % 100000}`
+
+    await admin.post('/api/masters/dealers', {
+      code,
+      name: 'ดีลเลอร์มีออเดอร์',
+      province: 'กรุงเทพมหานคร',
+      phone: '021234567',
+      grade: 'A',
+      creditLimit: 100000,
+    })
+    const dealer = await db.query.dealers.findFirst({ where: eq(schema.dealers.code, code) })
+    const dealerId = dealer!.id
+
+    const [order] = await db
+      .insert(schema.orders)
+      .values({
+        poNumber: `PO-2026-${String((Date.now() % 800000) + 100000).padStart(6, '0')}`,
+        dealerId,
+        vin: INSTALLED_VIN,
+        status: 'pending',
+        totalValue: 1000,
+        createdAt: new Date().toISOString(),
+      })
+      .returning()
+
+    const blocked = await admin.delete(`/api/masters/dealers/${dealerId}`)
+    expect(blocked.status).toBe(409)
+    const still = await db.query.dealers.findFirst({ where: eq(schema.dealers.id, dealerId) })
+    expect(still).toBeTruthy()
+
+    // cleanup: remove the order then the dealer
+    await db.delete(schema.orders).where(eq(schema.orders.id, order!.id))
+    const ok = await admin.delete(`/api/masters/dealers/${dealerId}`)
+    expect([200, 204]).toContain(ok.status)
+  })
+})
+
 describe('Audit log — core mutations record a row', () => {
   it('order.create writes an audit row keyed by PO number', async () => {
     const sales = await loginAs('sales@demo.co')

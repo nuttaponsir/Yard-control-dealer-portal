@@ -91,6 +91,20 @@ const TABS: MasterTab[] = [
       { key: 'value', labelKey: 'masters.field.value', type: 'text' },
     ],
   },
+  {
+    entity: 'dealers',
+    labelKey: 'masters.tab.dealers',
+    editable: true,
+    // creditUsed is system-managed (not editable); createdAt is server-stamped.
+    fields: [
+      { key: 'code', labelKey: 'masters.field.code', type: 'text' },
+      { key: 'name', labelKey: 'masters.field.name', type: 'text' },
+      { key: 'province', labelKey: 'masters.field.province', type: 'text' },
+      { key: 'phone', labelKey: 'masters.field.phone', type: 'text' },
+      { key: 'grade', labelKey: 'masters.field.grade', type: 'text' },
+      { key: 'creditLimit', labelKey: 'masters.field.creditLimit', type: 'number' },
+    ],
+  },
   // ---- reference (read-only) ----
   {
     entity: 'warehouses',

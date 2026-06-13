@@ -20,5 +20,7 @@ const sidebarOpen = useState('ui:sidebarOpen', () => false)
         <slot />
       </main>
     </div>
+    <!-- Phase I — floating AI chat (demo). Self-gates on auth. -->
+    <AiChatWidget />
   </div>
 </template>

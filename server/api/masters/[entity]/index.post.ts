@@ -13,12 +13,17 @@ export default defineEventHandler(async (event) => {
   assertEditable(entity, def)
 
   const values = await parseBody(event, def.create)
+  // Some masters inject server-managed columns (timestamps, system defaults)
+  // that the client is not allowed to set.
+  const toInsert = def.prepareCreate
+    ? def.prepareCreate(values as Record<string, unknown>)
+    : values
 
   try {
     // `def.table` is a heterogeneous union of master tables; the Zod-validated
     // `values` shape is checked at runtime, so cast at the insert boundary.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [row] = await db.insert(def.table).values(values as any).returning()
+    const [row] = await db.insert(def.table).values(toInsert as any).returning()
     return { ok: true, row }
   } catch {
     // Most likely a unique-constraint violation on the natural key.

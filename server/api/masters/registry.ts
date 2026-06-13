@@ -10,7 +10,8 @@
 // create schema made `.partial()` so PUT can patch a subset of fields.
 // ============================================================================
 import { z } from 'zod'
-import { schema } from '../../db'
+import { eq } from 'drizzle-orm'
+import { db, schema } from '../../db'
 import type { PgTableWithColumns } from 'drizzle-orm/pg-core'
 
 // Some masters are derived/canonical reference data that the seed owns; we
@@ -24,6 +25,13 @@ export interface MasterDef {
   editable: boolean
   // Column used for the default sort (all masters have a stable text key).
   sortKey: string
+  // Optional: augment the validated body before INSERT (e.g. inject a server
+  // timestamp or a system-managed default the UI must not set). Returns the
+  // full row to insert.
+  prepareCreate?: (values: Record<string, unknown>) => Record<string, unknown>
+  // Optional: block a DELETE when the row is still referenced (FK safety).
+  // Throw a createError() to reject; resolve to allow.
+  assertDeletable?: (id: number) => Promise<void>
 }
 
 const code = z.string().trim().min(1).max(64)
@@ -85,6 +93,20 @@ const vehicleModelsCreate = z.object({
   active: z.boolean().default(true),
 })
 
+// Dealers are master data and credit (limit/grade) hangs off them, so they are
+// fully editable here. `creditUsed` is system-managed (accumulated by orders/
+// payments) and `createdAt` is server-stamped — neither is accepted from the
+// client; both are injected in prepareCreate. `creditTermId` stays null (the
+// text `grade` is the source of truth for tiering).
+const dealersCreate = z.object({
+  code,
+  name,
+  province: z.string().trim().min(1).max(120),
+  phone: z.string().trim().min(1).max(40),
+  grade: z.enum(['A', 'B', 'C']),
+  creditLimit: z.number().int().min(0),
+})
+
 export const MASTERS: Record<string, MasterDef> = {
   // ---- operational masters (full CRUD) ----
   suppliers: {
@@ -128,6 +150,32 @@ export const MASTERS: Record<string, MasterDef> = {
     update: appConfigCreate.partial(),
     editable: true,
     sortKey: 'key',
+  },
+  dealers: {
+    table: schema.dealers,
+    create: dealersCreate,
+    update: dealersCreate.partial(),
+    editable: true,
+    sortKey: 'code',
+    // Stamp createdAt + start creditUsed at 0; the client can set neither.
+    prepareCreate: (v) => ({ ...v, creditUsed: 0, createdAt: new Date().toISOString() }),
+    // Don't orphan orders/users: refuse delete while either still points here.
+    assertDeletable: async (id) => {
+      const order = await db.query.orders.findFirst({ where: eq(schema.orders.dealerId, id) })
+      if (order) {
+        throw createError({
+          statusCode: 409,
+          statusMessage: 'ลบไม่ได้: ดีลเลอร์นี้มีคำสั่งซื้อผูกอยู่',
+        })
+      }
+      const user = await db.query.users.findFirst({ where: eq(schema.users.dealerId, id) })
+      if (user) {
+        throw createError({
+          statusCode: 409,
+          statusMessage: 'ลบไม่ได้: ดีลเลอร์นี้มีผู้ใช้ผูกอยู่',
+        })
+      }
+    },
   },
 
   // ---- derived / canonical reference data (read-only) ----

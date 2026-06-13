@@ -17,6 +17,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'รหัสไม่ถูกต้อง' })
   }
 
+  // FK safety: some masters refuse deletion while still referenced.
+  if (def.assertDeletable) await def.assertDeletable(id)
+
   const [row] = await db.delete(def.table).where(eq(def.table.id, id)).returning()
   if (!row) {
     throw createError({ statusCode: 404, statusMessage: 'ไม่พบรายการ' })

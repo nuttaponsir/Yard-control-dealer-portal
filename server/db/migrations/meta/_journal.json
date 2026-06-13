@@ -15,6 +15,13 @@
       "when": 1781280901169,
       "tag": "0001_futuristic_adam_warlock",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781355145206,
+      "tag": "0002_bored_prowler",
+      "breakpoints": true
     }
   ]
 }
