@@ -34,6 +34,7 @@
     "@nuxt/eslint": "^1.16.0",
     "@tailwindcss/vite": "^4.1.0",
     "@types/bcryptjs": "^2.4.6",
+    "@vitejs/plugin-vue": "^6.0.7",
     "@vue/test-utils": "^2.4.11",
     "drizzle-kit": "^0.30.0",
     "eslint": "^10.4.1",

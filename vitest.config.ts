@@ -4,7 +4,9 @@
 //   • unit       — node env: server API/unit tests, label maps, Zod validation,
 //                  and the e2e order-flow tests (hit a running dev server).
 //   • component  — happy-dom + @vitejs/plugin-vue: mounts the .vue SFCs.
-// `@vitejs/plugin-vue` ships with Nuxt, so no extra dependency is needed.
+// `@vitejs/plugin-vue` is a direct devDependency: npm hoists Nuxt's copy so a
+// local `npm test` works without it, but pnpm's strict node_modules (used in
+// CI) only resolves declared packages — so it MUST stay in package.json.
 // ============================================================================
 import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
