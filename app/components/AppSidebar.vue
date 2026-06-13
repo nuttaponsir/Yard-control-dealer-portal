@@ -7,6 +7,9 @@ const { t } = useI18n()
 const items = useNav()
 const { can, user } = useAuth()
 const collapsed = ref(false)
+// Mobile drawer open state — shared with AppHeader's hamburger + the layout
+// backdrop. On lg+ the sidebar is always docked so this flag is irrelevant there.
+const open = useState('ui:sidebarOpen', () => false)
 const route = useRoute()
 
 function active(to: string) {
@@ -16,8 +19,11 @@ function active(to: string) {
 
 <template>
   <aside
-    class="flex shrink-0 flex-col border-r border-app bg-surface transition-all"
-    :class="collapsed ? 'w-16' : 'w-60'"
+    class="fixed inset-y-0 left-0 z-50 flex w-60 shrink-0 flex-col border-r border-app bg-surface transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0 lg:transition-all"
+    :class="[
+      open ? 'translate-x-0' : '-translate-x-full',
+      collapsed ? 'lg:w-16' : 'lg:w-60',
+    ]"
   >
     <!-- brand -->
     <div class="flex items-center gap-2.5 px-4 py-4">
@@ -28,12 +34,21 @@ function active(to: string) {
         <p class="truncate text-sm font-bold text-app">{{ t('brand.name') }}</p>
         <p class="truncate text-[10px] uppercase tracking-wider text-muted">{{ t('brand.tagline') }}</p>
       </div>
+      <!-- desktop collapse toggle -->
       <button
-        class="ml-auto rounded-lg p-1 text-muted hover:bg-surface-2"
+        class="ml-auto hidden rounded-lg p-1 text-muted hover:bg-surface-2 lg:block"
         :aria-label="collapsed ? 'Expand' : 'Collapse'"
         @click="collapsed = !collapsed"
       >
         {{ collapsed ? '»' : '«' }}
+      </button>
+      <!-- mobile drawer close -->
+      <button
+        class="ml-auto rounded-lg p-1 text-muted hover:bg-surface-2 lg:hidden"
+        aria-label="Close menu"
+        @click="open = false"
+      >
+        ✕
       </button>
     </div>
 
@@ -48,6 +63,7 @@ function active(to: string) {
             ? 'bg-brand-900/30 text-brand-300'
             : 'text-muted hover:bg-surface-2 hover:text-app'"
           :title="t(item.labelKey)"
+          @click="open = false"
         >
           <span class="w-5 shrink-0 text-center">{{ item.icon }}</span>
           <span v-if="!collapsed" class="truncate">{{ t(item.labelKey) }}</span>

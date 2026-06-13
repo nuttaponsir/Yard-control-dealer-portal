@@ -4,6 +4,7 @@ import { ROLE_LABELS } from '~/utils/labels'
 defineProps<{ title: string; subtitle?: string }>()
 const { lang, toggle, t } = useI18n()
 const { user, logout } = useAuth()
+const sidebarOpen = useState('ui:sidebarOpen', () => false)
 
 async function onLogout() {
   await logout()
@@ -12,12 +13,19 @@ async function onLogout() {
 </script>
 
 <template>
-  <header class="flex items-center gap-4 border-b border-app bg-surface px-6 py-3">
+  <header class="flex items-center gap-3 border-b border-app bg-surface px-4 py-3 sm:gap-4 sm:px-6">
+    <button
+      class="-ml-1 rounded-lg p-1.5 text-muted hover:bg-surface-2 hover:text-app lg:hidden"
+      aria-label="Open menu"
+      @click="sidebarOpen = true"
+    >
+      <span class="block text-xl leading-none">☰</span>
+    </button>
     <div class="min-w-0">
-      <h1 class="truncate text-lg font-bold text-app">{{ title }}</h1>
+      <h1 class="truncate text-base font-bold text-app sm:text-lg">{{ title }}</h1>
       <p v-if="subtitle" class="truncate text-xs text-muted">{{ subtitle }}</p>
     </div>
-    <div class="ml-auto flex items-center gap-2">
+    <div class="ml-auto flex items-center gap-1.5 sm:gap-2">
       <NotificationBell v-if="user" />
       <button
         class="rounded-lg border border-app px-2.5 py-1.5 text-xs font-semibold text-muted hover:bg-surface-2 hover:text-app"
