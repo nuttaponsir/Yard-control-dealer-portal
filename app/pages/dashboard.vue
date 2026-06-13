@@ -77,18 +77,21 @@ const lowStockColumns = computed(() => [
 
     <!-- Daily-orders chart -->
     <AppCard :title="t('dashboard.chart.title')" :subtitle="t('dashboard.chart.subtitle')">
-      <div class="flex h-44 items-end gap-1.5">
+      <div class="flex h-44 gap-1.5">
         <div
           v-for="d in dailyOrders"
           :key="d.date"
-          class="flex flex-1 flex-col items-center justify-end gap-1"
+          class="flex flex-1 flex-col items-center gap-1"
         >
           <span class="text-[10px] font-semibold text-muted">{{ d.count }}</span>
-          <div
-            class="w-full rounded-t bg-brand-600"
-            :style="{ height: barHeight(d.count) + '%', minHeight: '2px' }"
-            :title="`${d.date}: ${d.count}`"
-          />
+          <!-- bar track: flex-1 gives a definite height so the bar's % resolves -->
+          <div class="flex w-full flex-1 items-end">
+            <div
+              class="w-full rounded-t bg-brand-600"
+              :style="{ height: barHeight(d.count) + '%', minHeight: d.count > 0 ? '4px' : '0' }"
+              :title="`${d.date}: ${d.count}`"
+            />
+          </div>
           <span class="text-[9px] text-muted">{{ shortDate(d.date) }}</span>
         </div>
       </div>
