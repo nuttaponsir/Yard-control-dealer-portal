@@ -91,6 +91,11 @@ export async function startServer(): Promise<string> {
   const usersPost = (await import('../../server/api/users/index.post')).default
   const usersPut = (await import('../../server/api/users/[id].put')).default
   const usersResetPassword = (await import('../../server/api/users/[id]/reset-password.post')).default
+  // Phase 2 — dealer address book (bill-to / ship-to + geo)
+  const addressesGet = (await import('../../server/api/addresses/index.get')).default
+  const addressesPost = (await import('../../server/api/addresses/index.post')).default
+  const addressesPut = (await import('../../server/api/addresses/[id].put')).default
+  const addressesDelete = (await import('../../server/api/addresses/[id].delete')).default
 
   router.post('/api/auth/login', eventHandler(login))
   router.post('/api/auth/logout', eventHandler(logout))
@@ -146,6 +151,10 @@ export async function startServer(): Promise<string> {
   router.post('/api/users', eventHandler(usersPost))
   router.put('/api/users/:id', eventHandler(usersPut))
   router.post('/api/users/:id/reset-password', eventHandler(usersResetPassword))
+  router.get('/api/addresses', eventHandler(addressesGet))
+  router.post('/api/addresses', eventHandler(addressesPost))
+  router.put('/api/addresses/:id', eventHandler(addressesPut))
+  router.delete('/api/addresses/:id', eventHandler(addressesDelete))
 
   app.use(router)
 

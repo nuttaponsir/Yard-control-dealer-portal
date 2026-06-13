@@ -29,6 +29,13 @@
       "when": 1781367310606,
       "tag": "0003_lovely_blazing_skull",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1781369062399,
+      "tag": "0004_smart_zaladane",
+      "breakpoints": true
     }
   ]
 }

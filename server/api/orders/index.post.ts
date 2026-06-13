@@ -29,6 +29,10 @@ const createOrderSchema = z.object({
       }),
     )
     .min(1),
+  // Phase 2 — optional bill-to / ship-to address book references. When present
+  // they must belong to the ordering dealer (validated below).
+  shipToAddressId: z.number().int().positive().nullish(),
+  billToAddressId: z.number().int().positive().nullish(),
 })
 
 function poNumber(seq: number): string {
@@ -46,7 +50,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'บัญชีนี้ไม่ได้ผูกกับดีลเลอร์' })
   }
 
-  const { vin, items } = await parseBody(event, createOrderSchema)
+  const { vin, items, shipToAddressId, billToAddressId } = await parseBody(event, createOrderSchema)
 
   // VIN gate: the order must reference a known vehicle whose Autologic
   // telematics device is installed. No device → no parts ordering.
@@ -87,6 +91,22 @@ export default defineEventHandler(async (event) => {
   })
   if (!dealer) {
     throw createError({ statusCode: 403, statusMessage: 'ไม่พบข้อมูลดีลเลอร์' })
+  }
+
+  // Phase 2 — validate optional ship-to / bill-to addresses belong to THIS
+  // dealer before the order is placed (no cross-dealer address leakage).
+  const addrIds = [shipToAddressId, billToAddressId].filter((v): v is number => v != null)
+  if (addrIds.length) {
+    const addrs = await db.query.dealerAddresses.findMany({
+      where: inArray(schema.dealerAddresses.id, addrIds),
+    })
+    const byId = new Map(addrs.map((a) => [a.id, a]))
+    for (const aid of addrIds) {
+      const a = byId.get(aid)
+      if (!a || a.dealerId !== user.dealerId) {
+        throw createError({ statusCode: 400, statusMessage: `ไม่พบที่อยู่รหัส ${aid} ของดีลเลอร์นี้` })
+      }
+    }
   }
 
   // Tiered discount from the price-tier master (M7); fall back to 0% if unset.
@@ -176,6 +196,8 @@ export default defineEventHandler(async (event) => {
         invoiceNo: newInvoice,
         trackingNo: null,
         carrier: null,
+        shipToAddressId: shipToAddressId ?? null,
+        billToAddressId: billToAddressId ?? null,
         createdAt: new Date().toISOString(),
       })
       .returning()

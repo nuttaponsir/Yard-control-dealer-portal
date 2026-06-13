@@ -154,6 +154,76 @@ export async function seedDatabase(): Promise<{
   const insertedDealers = await db.insert(schema.dealers).values(dealerRows).returning()
   const dlr1 = insertedDealers[0]!.id
 
+  // ---- Phase 2: sample dealer addresses (bill-to / ship-to + geo) ----------
+  // A couple for DLR0001 (default billing + default shipping) and one for
+  // DLR0002, so the address book + map preview have data out of the box.
+  const dlr2 = insertedDealers[1]?.id
+  await db.insert(schema.dealerAddresses).values(
+    [
+      {
+        dealerId: dlr1,
+        label: 'สำนักงานใหญ่',
+        kind: 'billing' as const,
+        line1: '199 ถนนสุขุมวิท',
+        subDistrict: 'คลองเตย',
+        district: 'คลองเตย',
+        province: 'กรุงเทพมหานคร',
+        postalCode: '10110',
+        country: 'TH',
+        lat: 13.7218,
+        lng: 100.5793,
+        contactName: 'ฝ่ายบัญชี',
+        contactPhone: '02-111-2222',
+        isDefaultBilling: true,
+        isDefaultShipping: false,
+        createdAt: iso(100),
+        updatedAt: null,
+      },
+      {
+        dealerId: dlr1,
+        label: 'คลังรับสินค้า',
+        kind: 'shipping' as const,
+        line1: '88 หมู่ 4 ถนนบางนา-ตราด',
+        subDistrict: 'บางแก้ว',
+        district: 'บางพลี',
+        province: 'สมุทรปราการ',
+        postalCode: '10540',
+        country: 'TH',
+        lat: 13.6021,
+        lng: 100.7501,
+        contactName: 'ฝ่ายคลัง',
+        contactPhone: '02-333-4444',
+        isDefaultBilling: false,
+        isDefaultShipping: true,
+        createdAt: iso(100),
+        updatedAt: null,
+      },
+      ...(dlr2 != null
+        ? [
+            {
+              dealerId: dlr2,
+              label: 'สาขาเชียงใหม่',
+              kind: 'both' as const,
+              line1: '55 ถนนนิมมานเหมินท์',
+              subDistrict: 'สุเทพ',
+              district: 'เมืองเชียงใหม่',
+              province: 'เชียงใหม่',
+              postalCode: '50200',
+              country: 'TH',
+              lat: 18.7969,
+              lng: 98.9669,
+              contactName: 'ผู้จัดการสาขา',
+              contactPhone: '053-555-666',
+              isDefaultBilling: true,
+              isDefaultShipping: true,
+              createdAt: iso(100),
+              updatedAt: null,
+            },
+          ]
+        : []),
+    ],
+  )
+
   // ---- 4 demo users (password "demo1234") ----------------------------------
   const hash = await bcrypt.hash('demo1234', 10)
   const insertedUsers = await db

@@ -6,7 +6,7 @@
 // the SA. Timestamp-like fields are stored as ISO text for a 1:1 shape with the
 // frontend domain types (no (de)serialization drift).
 // ============================================================================
-import { pgTable, text, integer, boolean, serial } from 'drizzle-orm/pg-core'
+import { pgTable, text, integer, boolean, serial, doublePrecision } from 'drizzle-orm/pg-core'
 
 // ---- dealers ---------------------------------------------------------------
 export const dealers = pgTable('dealers', {
@@ -21,6 +21,34 @@ export const dealers = pgTable('dealers', {
   createdAt: text('created_at').notNull(),
   // Phase B Wave 1: nullable FK to creditTerms master (text grade remains source of truth)
   creditTermId: integer('credit_term_id').references(() => creditTerms.id),
+})
+
+// ---- dealer addresses (Phase 2 — bill-to / ship-to + geo) ------------------
+// A dealer keeps an address book. Each entry can serve as a billing and/or
+// shipping address (`kind`), carries a full Thai postal address plus optional
+// lat/lng for map display, and may be flagged as the dealer's default for
+// billing and/or shipping. Orders reference an entry for where they ship/bill.
+export const dealerAddresses = pgTable('dealer_addresses', {
+  id: serial('id').primaryKey(),
+  dealerId: integer('dealer_id')
+    .notNull()
+    .references(() => dealers.id),
+  label: text('label').notNull(), // "สำนักงานใหญ่" | "คลังสาขา 2"
+  kind: text('kind').notNull().default('both'), // 'billing' | 'shipping' | 'both'
+  line1: text('line1').notNull(), // บ้านเลขที่/ถนน
+  subDistrict: text('sub_district'), // ตำบล/แขวง
+  district: text('district'), // อำเภอ/เขต
+  province: text('province').notNull(),
+  postalCode: text('postal_code'),
+  country: text('country').notNull().default('TH'),
+  lat: doublePrecision('lat'), // nullable — geocoded or hand-entered
+  lng: doublePrecision('lng'),
+  contactName: text('contact_name'),
+  contactPhone: text('contact_phone'),
+  isDefaultBilling: boolean('is_default_billing').notNull().default(false),
+  isDefaultShipping: boolean('is_default_shipping').notNull().default(false),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at'),
 })
 
 // ---- users -----------------------------------------------------------------
@@ -110,6 +138,10 @@ export const orders = pgTable('orders', {
   // existing rows read as unpaid with 0 paid.
   amountPaid: integer('amount_paid').notNull().default(0),
   paymentStatus: text('payment_status').notNull().default('unpaid'),
+  // Phase 2 — bill-to / ship-to address capture. Nullable FKs to the dealer's
+  // own address book; null on legacy rows (and when the dealer has no address).
+  shipToAddressId: integer('ship_to_address_id').references(() => dealerAddresses.id),
+  billToAddressId: integer('bill_to_address_id').references(() => dealerAddresses.id),
   createdAt: text('created_at').notNull(),
 })
 

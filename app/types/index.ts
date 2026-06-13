@@ -30,6 +30,30 @@ export interface Dealer {
   creditTermId?: number | null // Phase B Wave 1 — nullable FK to CreditTerm
 }
 
+// Phase 2 — a dealer's bill-to / ship-to address book entry (+ optional geo).
+export type AddressKind = 'billing' | 'shipping' | 'both'
+
+export interface DealerAddress {
+  id: number
+  dealerId: number
+  label: string
+  kind: AddressKind
+  line1: string
+  subDistrict: string | null
+  district: string | null
+  province: string
+  postalCode: string | null
+  country: string
+  lat: number | null
+  lng: number | null
+  contactName: string | null
+  contactPhone: string | null
+  isDefaultBilling: boolean
+  isDefaultShipping: boolean
+  createdAt: string
+  updatedAt: string | null
+}
+
 export interface User {
   id: number
   email: string
@@ -97,6 +121,8 @@ export interface Order {
   carrier: string | null
   amountPaid: number // Phase G — accumulated posted payments
   paymentStatus: PaymentStatus // Phase G — derived: unpaid | partial | paid
+  shipToAddressId?: number | null // Phase 2 — where the order ships
+  billToAddressId?: number | null // Phase 2 — where the order is billed
   createdAt: string
 }
 

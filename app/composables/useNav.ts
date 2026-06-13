@@ -14,6 +14,7 @@ export function useNav(): NavItemResolved[] {
     { to: '/vin', labelKey: 'nav.vin', icon: '🔎', roles: ['admin', 'owner', 'sales', 'warehouse'] },
     { to: '/catalog', labelKey: 'nav.catalog', icon: '🧰', roles: ['admin', 'owner', 'sales'] },
     { to: '/orders', labelKey: 'nav.orders', icon: '📦', roles: ['admin', 'owner', 'sales', 'warehouse'] },
+    { to: '/addresses', labelKey: 'nav.addresses', icon: '📍', roles: ['admin', 'owner', 'sales'] },
     { to: '/payments', labelKey: 'nav.payments', icon: '💰', roles: ['admin', 'owner', 'sales'] },
     { to: '/returns', labelKey: 'nav.returns', icon: '↩', roles: ['admin', 'owner', 'sales', 'warehouse'] },
     { to: '/claims', labelKey: 'nav.claims', icon: '🛡', roles: ['admin', 'owner', 'warehouse'] },
