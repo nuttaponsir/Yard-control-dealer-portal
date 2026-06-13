@@ -7,7 +7,7 @@ import { seedDatabase } from './seed-data'
 seedDatabase()
   .then((r) => {
     console.log(
-      `Seeded: ${r.dealers} dealers, ${r.users} demo users, ${r.orders} orders.`,
+      `Seeded: ${r.dealers} dealers, ${r.users} demo users, ${r.orders} orders, ${r.payments} payments.`,
     )
     process.exit(0)
   })

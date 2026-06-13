@@ -6,7 +6,7 @@
 // place. Idempotent: truncates then re-inserts.
 // ============================================================================
 import bcrypt from 'bcryptjs'
-import { sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { db, schema } from './index'
 
 const PROVINCES = [
@@ -24,7 +24,12 @@ function iso(daysAgo = 0) {
   return new Date(Date.now() - daysAgo * 86400000).toISOString()
 }
 
-export async function seedDatabase(): Promise<{ dealers: number; users: number; orders: number }> {
+export async function seedDatabase(): Promise<{
+  dealers: number
+  users: number
+  orders: number
+  payments: number
+}> {
   // wipe (children first), restart serial identities
   await db.execute(sql`TRUNCATE TABLE
     ${schema.auditLog}, ${schema.sessions}, ${schema.orderItems}, ${schema.orders},
@@ -149,12 +154,16 @@ export async function seedDatabase(): Promise<{ dealers: number; users: number; 
 
   // ---- 4 demo users (password "demo1234") ----------------------------------
   const hash = await bcrypt.hash('demo1234', 10)
-  await db.insert(schema.users).values([
-    { email: 'admin@demo.co', passwordHash: hash, role: 'admin', dealerId: null, createdAt: iso(100) },
-    { email: 'owner@demo.co', passwordHash: hash, role: 'owner', dealerId: dlr1, createdAt: iso(100) },
-    { email: 'sales@demo.co', passwordHash: hash, role: 'sales', dealerId: dlr1, createdAt: iso(100) },
-    { email: 'warehouse@demo.co', passwordHash: hash, role: 'warehouse', dealerId: null, createdAt: iso(100) },
-  ])
+  const insertedUsers = await db
+    .insert(schema.users)
+    .values([
+      { email: 'admin@demo.co', passwordHash: hash, role: 'admin', dealerId: null, createdAt: iso(100) },
+      { email: 'owner@demo.co', passwordHash: hash, role: 'owner', dealerId: dlr1, createdAt: iso(100) },
+      { email: 'sales@demo.co', passwordHash: hash, role: 'sales', dealerId: dlr1, createdAt: iso(100) },
+      { email: 'warehouse@demo.co', passwordHash: hash, role: 'warehouse', dealerId: null, createdAt: iso(100) },
+    ])
+    .returning()
+  const adminId = insertedUsers.find((u) => u.role === 'admin')!.id
 
   // ---- vehicle models (master) ---------------------------------------------
   const MODEL_NAMES = ['Triton', 'Pajero Sport', 'Outlander PHEV', 'Attrage']
@@ -243,6 +252,7 @@ export async function seedDatabase(): Promise<{ dealers: number; users: number; 
   // ---- ~40 sample orders + items (mostly DLR0001, a few others) -----------
   const installedVins = ['MMTJNKB40NH000001', 'MMBJNKS50PH000003', 'MMOJNPHEV2RH000006', 'MMTJNKB40NH000002']
   const skuList = insertedParts.map((p) => p.sku)
+  const insertedOrders: (typeof schema.orders.$inferSelect)[] = []
   let orderCount = 0
   for (let i = 0; i < 40; i++) {
     const dealer = i < 30 ? insertedDealers[0]! : insertedDealers[(i % 6) + 1]!
@@ -281,6 +291,7 @@ export async function seedDatabase(): Promise<{ dealers: number; users: number; 
         unitPrice: l.part.price,
       })),
     )
+    insertedOrders.push(order!)
     orderCount++
   }
 
@@ -302,5 +313,68 @@ export async function seedDatabase(): Promise<{ dealers: number; users: number; 
     })),
   )
 
-  return { dealers: insertedDealers.length, users: 4, orders: orderCount }
+  // ---- demo payments (Phase G — Accounts Receivable) ----------------------
+  // Settle a representative slice of DLR0001's orders so /payments and the
+  // AR-aging report have realistic data, then align DLR0001's creditUsed to its
+  // true outstanding receivables (orders consume credit; payments release it).
+  const PAY_METHODS = ['transfer', 'cash', 'cheque', 'card'] as const
+  const dlr1Orders = insertedOrders.filter((o) => o.dealerId === dlr1 && o.status !== 'cancelled')
+  let rcpSeq = 0
+  let paymentCount = 0
+  let dlr1Outstanding = 0
+  for (let i = 0; i < dlr1Orders.length; i++) {
+    const o = dlr1Orders[i]!
+    const mod = i % 3 // 0 → paid in full, 1 → partial (40%), 2 → left unpaid
+    const amount = mod === 0 ? o.totalValue : mod === 1 ? Math.floor(o.totalValue * 0.4) : 0
+    if (amount > 0) {
+      rcpSeq++
+      const daysAgo = (i % 25) + 1
+      await db.insert(schema.payments).values({
+        receiptNo: `RCP-2026-${pad(rcpSeq, 6)}`,
+        dealerId: dlr1,
+        orderId: o.id,
+        amount,
+        method: PAY_METHODS[i % PAY_METHODS.length]!,
+        reference: `REF-${pad(1000 + i, 4)}`,
+        note: null,
+        receivedAt: iso(daysAgo),
+        createdBy: adminId,
+        createdAt: iso(daysAgo),
+      })
+      await db
+        .update(schema.orders)
+        .set({ amountPaid: amount, paymentStatus: amount >= o.totalValue ? 'paid' : 'partial' })
+        .where(eq(schema.orders.id, o.id))
+      paymentCount++
+    }
+    dlr1Outstanding += o.totalValue - amount
+  }
+
+  // Two on-account (no-order) advance payments — release credit directly.
+  let onAccountTotal = 0
+  for (let k = 0; k < 2; k++) {
+    rcpSeq++
+    const amount = 5000 * (k + 1)
+    onAccountTotal += amount
+    await db.insert(schema.payments).values({
+      receiptNo: `RCP-2026-${pad(rcpSeq, 6)}`,
+      dealerId: dlr1,
+      orderId: null,
+      amount,
+      method: 'transfer',
+      reference: `ONACC-${k + 1}`,
+      note: 'ชำระเข้าบัญชีล่วงหน้า',
+      receivedAt: iso(k + 1),
+      createdBy: adminId,
+      createdAt: iso(k + 1),
+    })
+    paymentCount++
+  }
+
+  await db
+    .update(schema.dealers)
+    .set({ creditUsed: Math.max(0, dlr1Outstanding - onAccountTotal) })
+    .where(eq(schema.dealers.id, dlr1))
+
+  return { dealers: insertedDealers.length, users: 4, orders: orderCount, payments: paymentCount }
 }
