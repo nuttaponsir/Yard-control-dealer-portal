@@ -2,7 +2,7 @@
 //  - default: recent claims (newest first)
 //  - ?vin=XXXX: returns the purchase history (ordered parts) for that VIN so the
 //    user can pick an item to file a claim against.
-import { desc, eq } from 'drizzle-orm'
+import { and, desc, eq } from 'drizzle-orm'
 import { db, schema } from '../../db'
 import { requireUser } from '../../utils/auth'
 import type { Claim } from '../../../app/types'
@@ -20,12 +20,21 @@ export interface PurchaseHistoryItem {
 }
 
 export default defineEventHandler(async (event) => {
-  await requireUser(event, ['admin', 'owner', 'warehouse'])
+  const user = await requireUser(event, ['admin', 'owner', 'warehouse'])
+
+  // owner is scoped to their own dealer; admin/warehouse see the whole network.
+  const scoped = user.role === 'owner' && user.dealerId != null
+  const dealerId = user.dealerId as number
 
   const vin = (getQuery(event).vin as string | undefined)?.trim()
 
   // ---- purchase history for a VIN ------------------------------------------
   if (vin) {
+    // Scope the VIN's purchase history to the owner's own orders so a dealer
+    // can't enumerate another dealer's buys by guessing VINs.
+    const vinWhere = scoped
+      ? and(eq(schema.orders.vin, vin), eq(schema.orders.dealerId, dealerId))
+      : eq(schema.orders.vin, vin)
     const rows = await db
       .select({
         orderId: schema.orders.id,
@@ -40,7 +49,7 @@ export default defineEventHandler(async (event) => {
       .from(schema.orders)
       .innerJoin(schema.orderItems, eq(schema.orderItems.orderId, schema.orders.id))
       .innerJoin(schema.parts, eq(schema.parts.id, schema.orderItems.partId))
-      .where(eq(schema.orders.vin, vin))
+      .where(vinWhere)
       .orderBy(desc(schema.orders.createdAt))
 
     const history: PurchaseHistoryItem[] = rows.map((r) => ({
@@ -62,6 +71,7 @@ export default defineEventHandler(async (event) => {
   const claims = (await db
     .select()
     .from(schema.claims)
+    .where(scoped ? eq(schema.claims.dealerId, dealerId) : undefined)
     .orderBy(desc(schema.claims.createdAt))) as Claim[]
 
   // attach the part name for display (claims store partSku only)

@@ -1,17 +1,21 @@
 // GET /api/claims/export — download the recent-claims list as .xlsx.
 // Mirrors the RBAC of GET /api/claims (admin/owner/warehouse). One row per claim.
-import { desc } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import { db, schema } from '../../db'
 import { requireUser } from '../../utils/auth'
 import { buildXlsx, sendXlsx, type XlsxColumn } from '../../utils/xlsx'
 import type { Claim } from '../../../app/types'
 
 export default defineEventHandler(async (event) => {
-  await requireUser(event, ['admin', 'owner', 'warehouse'])
+  const user = await requireUser(event, ['admin', 'owner', 'warehouse'])
+
+  // owner exports only their own dealer's claims; admin/warehouse get all.
+  const scoped = user.role === 'owner' && user.dealerId != null
 
   const claims = (await db
     .select()
     .from(schema.claims)
+    .where(scoped ? eq(schema.claims.dealerId, user.dealerId as number) : undefined)
     .orderBy(desc(schema.claims.createdAt))) as Claim[]
 
   const partRows = await db

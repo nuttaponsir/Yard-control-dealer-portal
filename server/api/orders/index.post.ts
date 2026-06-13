@@ -17,6 +17,7 @@ import { parseBody } from '../../utils/validation'
 import { writeAudit } from '../../utils/audit'
 import { notify } from '../../utils/notify'
 import { computeOrderMoney } from '../../utils/pricing'
+import { getCreditEnforcement, getConfigNumber } from '../../utils/config'
 
 const createOrderSchema = z.object({
   vin: z.string().length(17),
@@ -106,13 +107,29 @@ export default defineEventHandler(async (event) => {
     vatRate,
   )
 
-  // Credit-limit enforcement — reject before touching any data.
-  if (dealer.creditUsed + money.total > dealer.creditLimit) {
-    const available = dealer.creditLimit - dealer.creditUsed
-    throw createError({
-      statusCode: 409,
-      statusMessage: `วงเงินเครดิตไม่พอ: ต้องการ ${money.total} แต่เหลือ ${available}`,
-    })
+  // Credit-limit enforcement — configurable via appConfig (Phase L):
+  //   block (default) → reject when over limit (optionally past an overlimit %)
+  //   warn            → allow, but flag the dealer + fire a credit_risk alert
+  //   off             → skip the check entirely
+  // The mode is read at order time so admins can retune policy without a deploy.
+  const creditMode = await getCreditEnforcement()
+  const projectedUsed = dealer.creditUsed + money.total
+  let creditWarn = false
+  if (creditMode !== 'off') {
+    const overlimitPct = await getConfigNumber('credit_overlimit_pct')
+    const ceiling = Math.round(dealer.creditLimit * (1 + overlimitPct / 100))
+    const overLimit = projectedUsed > ceiling
+    if (overLimit) {
+      if (creditMode === 'block') {
+        const available = ceiling - dealer.creditUsed
+        throw createError({
+          statusCode: 409,
+          statusMessage: `วงเงินเครดิตไม่พอ: ต้องการ ${money.total} แต่เหลือ ${available}`,
+        })
+      }
+      // warn: let the order through but remember to raise an alert afterwards.
+      creditWarn = true
+    }
   }
 
   // Stock guard — total on-hand across warehouses must cover each line.
@@ -217,5 +234,18 @@ export default defineEventHandler(async (event) => {
     vars: { po: newPo, total: money.total },
   })
 
-  return { ok: true, order, poNumber: newPo, invoiceNo: newInvoice, money }
+  // Credit policy = warn and this order pushed the dealer over their limit:
+  // the order stands, but raise a credit-risk alert to admins for follow-up.
+  if (creditWarn) {
+    await notify({
+      event: 'alert.credit_risk',
+      entity: 'system',
+      entityId: dealer.code,
+      dealerId: user.dealerId,
+      toAdmins: true,
+      vars: { count: 1 },
+    })
+  }
+
+  return { ok: true, order, poNumber: newPo, invoiceNo: newInvoice, money, creditWarn }
 })

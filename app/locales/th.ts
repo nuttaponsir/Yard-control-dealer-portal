@@ -21,6 +21,7 @@ export const th: Record<string, string> = {
   'nav.users': 'ผู้ใช้งาน',
   'nav.issues': 'ปัญหา/ข้อผิดพลาด',
   'nav.admin': 'ผู้ดูแลระบบ',
+  'nav.settings': 'ตั้งค่าระบบ',
 
   // ---- common actions / buttons ----
   'action.logout': 'ออกจากระบบ',
@@ -49,6 +50,17 @@ export const th: Record<string, string> = {
   'common.all': 'ทั้งหมด',
   'common.total': 'รวม',
   'common.baht': 'บาท',
+  'common.save': 'บันทึก',
+  'common.reset': 'คืนค่าเดิม',
+  'common.on': 'เปิด',
+  'common.off': 'ปิด',
+
+  // ---- settings page ----
+  'page.settings.title': 'ตั้งค่าระบบ',
+  'page.settings.subtitle': 'ปรับค่าการทำงานของระบบ เช่น ภาษี เครดิต และการเชื่อมต่อ',
+  'settings.saved': 'บันทึกการตั้งค่าแล้ว',
+  'settings.saving': 'กำลังบันทึก...',
+  'settings.error': 'บันทึกการตั้งค่าไม่สำเร็จ',
 
   // ---- page titles / subtitles ----
   'page.dashboard.title': 'ภาพรวม',

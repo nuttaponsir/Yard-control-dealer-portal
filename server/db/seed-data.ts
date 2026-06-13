@@ -129,6 +129,8 @@ export async function seedDatabase(): Promise<{
   await db.insert(schema.appConfig).values([
     { key: 'vat_rate', value: '7' },
     { key: 'currency', value: 'THB' },
+    { key: 'credit_enforcement', value: 'block' },
+    { key: 'credit_overlimit_pct', value: '0' },
   ])
 
   // ---- 100 dealers ---------------------------------------------------------
@@ -301,16 +303,23 @@ export async function seedDatabase(): Promise<{
     'ชิ้นส่วนชำรุดจากการขนส่ง', 'สินค้าไม่ตรงรุ่น', 'อายุการใช้งานต่ำกว่ามาตรฐาน',
     'พบรอยร้าวหลังติดตั้ง', 'ค่าไฟกระพริบผิดปกติ', 'เสียงดังผิดปกติ',
   ]
+  // Scope each claim to the dealer that actually ordered its VIN (Phase L);
+  // fall back to dlr1 if that VIN has no order in the seed set.
+  const dealerByVin = new Map(insertedOrders.map((o) => [o.vin, o.dealerId]))
   await db.insert(schema.claims).values(
-    Array.from({ length: 6 }, (_, i) => ({
-      claimNumber: `CLM-2026-${pad(i + 1, 4)}`,
-      vin: installedVins[i % installedVins.length]!,
-      partSku: skuList[i % skuList.length]!,
-      reason: reasons[i]!,
-      status: claimStatuses[i % claimStatuses.length]!,
-      amount: 350 + i * 600,
-      createdAt: iso(20 - i * 2),
-    })),
+    Array.from({ length: 6 }, (_, i) => {
+      const vin = installedVins[i % installedVins.length]!
+      return {
+        claimNumber: `CLM-2026-${pad(i + 1, 4)}`,
+        dealerId: dealerByVin.get(vin) ?? dlr1,
+        vin,
+        partSku: skuList[i % skuList.length]!,
+        reason: reasons[i]!,
+        status: claimStatuses[i % claimStatuses.length]!,
+        amount: 350 + i * 600,
+        createdAt: iso(20 - i * 2),
+      }
+    }),
   )
 
   // ---- demo payments (Phase G — Accounts Receivable) ----------------------

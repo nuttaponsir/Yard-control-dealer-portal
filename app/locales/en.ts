@@ -20,6 +20,7 @@ export const en: Record<string, string> = {
   'nav.users': 'Users',
   'nav.issues': 'Issues',
   'nav.admin': 'Admin',
+  'nav.settings': 'Settings',
 
   // ---- common actions / buttons ----
   'action.logout': 'Sign out',
@@ -48,6 +49,17 @@ export const en: Record<string, string> = {
   'common.all': 'All',
   'common.total': 'Total',
   'common.baht': 'THB',
+  'common.save': 'Save',
+  'common.reset': 'Reset',
+  'common.on': 'On',
+  'common.off': 'Off',
+
+  // ---- settings page ----
+  'page.settings.title': 'System Settings',
+  'page.settings.subtitle': 'Tune system behaviour: tax, credit policy, and integrations',
+  'settings.saved': 'Settings saved',
+  'settings.saving': 'Saving...',
+  'settings.error': 'Failed to save settings',
 
   // ---- page titles / subtitles ----
   'page.dashboard.title': 'Overview',

@@ -45,6 +45,7 @@ export default defineEventHandler(async (event) => {
     .insert(schema.claims)
     .values({
       claimNumber,
+      dealerId: user.dealerId ?? null, // scope the claim to the filing dealer
       vin,
       partSku,
       reason,

@@ -111,6 +111,7 @@ export interface OrderItem {
 export interface Claim {
   id: number
   claimNumber: string
+  dealerId: number | null
   vin: string
   partSku: string
   reason: string

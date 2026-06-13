@@ -130,6 +130,10 @@ export const orderItems = pgTable('order_items', {
 export const claims = pgTable('claims', {
   id: serial('id').primaryKey(),
   claimNumber: text('claim_number').notNull().unique(), // CLM-2026-0001
+  // Filing dealer (Phase L). Nullable: admin/warehouse staff have no dealer, and
+  // pre-existing seed rows backfill to NULL. owner/sales are scoped to their own
+  // dealerId on read; null-dealer claims are visible to admin/warehouse only.
+  dealerId: integer('dealer_id').references(() => dealers.id),
   vin: text('vin').notNull(),
   partSku: text('part_sku').notNull(),
   reason: text('reason').notNull(),

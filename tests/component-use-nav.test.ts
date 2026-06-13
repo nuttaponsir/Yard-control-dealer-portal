@@ -19,7 +19,7 @@ function visibleKeysFor(role: Role): string[] {
 }
 
 describe('useNav role gating (SPEC §2.3 / AC-1.x)', () => {
-  it('exposes exactly the 13 modules in order', () => {
+  it('exposes exactly the 14 modules in order', () => {
     expect(useNav().map((i) => i.labelKey)).toEqual([
       'nav.dashboard',
       'nav.vin',
@@ -34,10 +34,11 @@ describe('useNav role gating (SPEC §2.3 / AC-1.x)', () => {
       'nav.users',
       'nav.issues',
       'nav.admin',
+      'nav.settings',
     ])
   })
 
-  it('AC-1.1: admin sees all 13 modules', () => {
+  it('AC-1.1: admin sees all 14 modules', () => {
     expect(visibleKeysFor('admin')).toEqual([
       'nav.dashboard',
       'nav.vin',
@@ -52,6 +53,7 @@ describe('useNav role gating (SPEC §2.3 / AC-1.x)', () => {
       'nav.users',
       'nav.issues',
       'nav.admin',
+      'nav.settings',
     ])
   })
 

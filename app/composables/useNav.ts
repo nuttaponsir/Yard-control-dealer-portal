@@ -23,5 +23,6 @@ export function useNav(): NavItemResolved[] {
     { to: '/users', labelKey: 'nav.users', icon: '👤', roles: ['admin'] },
     { to: '/issues', labelKey: 'nav.issues', icon: '🐞', roles: ['admin'] },
     { to: '/admin', labelKey: 'nav.admin', icon: '⚙', roles: ['admin'] },
+    { to: '/settings', labelKey: 'nav.settings', icon: '🛠', roles: ['admin'] },
   ]
 }
