@@ -139,6 +139,7 @@ export const en: Record<string, string> = {
   'page.picking.title': 'Pick Tasks',
   'page.picking.subtitle': 'Picking lists for orders being packed',
   'picking.pickNumber': 'Pick no.',
+  'picking.part': 'Part',
   'picking.order': 'Order',
   'picking.warehouse': 'Warehouse',
   'picking.assignedTo': 'Assigned to',

@@ -130,6 +130,7 @@ async function generate() {
 }
 
 // ---- display helpers -------------------------------------------------------
+// Thai/EN label via i18n; the tone comes from the shared StatusBadge map.
 const statusLabel = (s: PickTaskStatus) => t(`picking.status.${s}`)
 const assignedLabel = (task: PickTaskRow) =>
   task.assignedTo == null
@@ -137,19 +138,6 @@ const assignedLabel = (task: PickTaskRow) =>
     : task.assignedTo === user.value?.id
       ? user.value?.email ?? `#${task.assignedTo}`
       : `#${task.assignedTo}`
-
-const statusClass = (s: PickTaskStatus) => {
-  switch (s) {
-    case 'picked':
-      return 'bg-emerald-600/20 text-emerald-300'
-    case 'cancelled':
-      return 'bg-rose-600/20 text-rose-300'
-    case 'open':
-      return 'bg-surface-2 text-muted'
-    default:
-      return 'bg-brand-600/20 text-brand-300'
-  }
-}
 
 // Shared input field classes (kept in script to avoid a Tailwind @apply block).
 const fld =
@@ -182,9 +170,7 @@ const fld =
           <button class="min-w-0 flex-1 text-left" @click="toggle(task)">
             <div class="flex flex-wrap items-center gap-2">
               <p class="font-semibold text-app">{{ task.pickNumber }}</p>
-              <span class="rounded-full px-2 py-0.5 text-[11px]" :class="statusClass(task.status)">
-                {{ statusLabel(task.status) }}
-              </span>
+              <StatusBadge :status="task.status" :label="statusLabel(task.status)" />
             </div>
             <p class="mt-1 text-xs text-muted">
               {{ t('picking.order') }}: {{ task.poNumber }}
@@ -220,7 +206,7 @@ const fld =
           <table v-else class="w-full text-sm">
             <thead>
               <tr class="text-left text-xs text-muted">
-                <th class="pb-1 font-medium">SKU — {{ t('picking.items') }}</th>
+                <th class="pb-1 font-medium">{{ t('picking.part') }}</th>
                 <th class="pb-1 text-right font-medium">{{ t('picking.qty') }}</th>
                 <th class="pb-1 text-right font-medium">{{ t('picking.picked') }}</th>
                 <th class="pb-1 text-right font-medium">{{ t('picking.location') }}</th>

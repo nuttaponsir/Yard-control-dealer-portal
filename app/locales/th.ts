@@ -140,6 +140,7 @@ export const th: Record<string, string> = {
   'page.picking.title': 'ใบจัดสินค้า',
   'page.picking.subtitle': 'รายการจัดสินค้าสำหรับคำสั่งซื้อที่กำลังแพ็ก',
   'picking.pickNumber': 'เลขใบจัด',
+  'picking.part': 'อะไหล่',
   'picking.order': 'คำสั่งซื้อ',
   'picking.warehouse': 'คลัง',
   'picking.assignedTo': 'ผู้รับผิดชอบ',

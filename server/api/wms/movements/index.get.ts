@@ -11,6 +11,7 @@ import type { StockMovement } from '../../../../app/types'
 export interface MovementRow extends StockMovement {
   partSku: string | null
   partName: string | null
+  createdByEmail: string | null
 }
 
 export default defineEventHandler(async (event) => {
@@ -37,12 +38,17 @@ export default defineEventHandler(async (event) => {
   const partRows = await db.query.parts.findMany()
   const partById = new Map(partRows.map((p) => [p.id, p]))
 
+  // Resolve who posted each movement (for the "by" column) — email, not raw id.
+  const userRows = await db.query.users.findMany()
+  const emailById = new Map(userRows.map((u) => [u.id, u.email]))
+
   const movements: MovementRow[] = rows.map((m) => {
     const part = partById.get(m.partId)
     return {
       ...(m as StockMovement),
       partSku: part?.sku ?? null,
       partName: part?.name ?? null,
+      createdByEmail: m.createdBy != null ? emailById.get(m.createdBy) ?? null : null,
     }
   })
 

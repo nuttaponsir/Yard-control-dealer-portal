@@ -88,6 +88,11 @@ export const STATUS_TONE: Record<string, string> = {
   // vins
   installed: 'bg-emerald-500/15 text-emerald-400',
   not_installed: 'bg-rose-500/15 text-rose-400',
+  // WMS pick tasks (Phase 3)
+  open: 'bg-zinc-700/40 text-zinc-300',
+  assigned: 'bg-amber-500/15 text-amber-400',
+  picking: 'bg-indigo-500/15 text-indigo-400',
+  picked: 'bg-emerald-500/15 text-emerald-400',
 }
 
 /** Resolve a Thai label for any known status string (falls back to the input). */

@@ -198,9 +198,10 @@ const fld =
               <td class="px-3 py-2 text-muted">{{ l.bin ?? '—' }}</td>
               <td class="px-3 py-2">
                 <span
-                  class="rounded-full px-2 py-0.5 text-[11px]"
-                  :class="l.active ? 'bg-emerald-600/20 text-emerald-300' : 'bg-surface-2 text-muted'"
+                  class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                  :class="l.active ? 'bg-emerald-500/15 text-emerald-400' : 'bg-zinc-700/40 text-zinc-300'"
                 >
+                  <span class="h-1.5 w-1.5 rounded-full bg-current" />
                   {{ l.active ? t('locations.active') : t('locations.inactive') }}
                 </span>
               </td>
