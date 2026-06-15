@@ -37,7 +37,9 @@ export async function seedDatabase(): Promise<{
     ${schema.vehicleModels}, ${schema.users}, ${schema.dealers},
     ${schema.warehouses}, ${schema.partCategories}, ${schema.carriers},
     ${schema.suppliers}, ${schema.creditTerms}, ${schema.priceTiers},
-    ${schema.claimReasons}, ${schema.provinces}, ${schema.appConfig}
+    ${schema.claimReasons}, ${schema.provinces}, ${schema.appConfig},
+    ${schema.storageLocations}, ${schema.stockMovements},
+    ${schema.pickTasks}, ${schema.pickTaskItems}
     RESTART IDENTITY CASCADE`)
 
   // ---- Phase B Wave 1 master tables (seed before dependents) ---------------
@@ -131,6 +133,8 @@ export async function seedDatabase(): Promise<{
     { key: 'currency', value: 'THB' },
     { key: 'credit_enforcement', value: 'block' },
     { key: 'credit_overlimit_pct', value: '0' },
+    { key: 'wms_mode', value: 'internal' },
+    { key: 'wms_auto_pick', value: 'true' },
   ])
 
   // ---- 100 dealers ---------------------------------------------------------
@@ -282,6 +286,27 @@ export async function seedDatabase(): Promise<{
     ]
   })
   await db.insert(schema.inventory).values(invRows)
+
+  // ---- Phase 3: storage locations (bin master) -----------------------------
+  // A small bin grid per warehouse so the WMS pick engine has bins to suggest.
+  const nowIso = iso(100)
+  const locRows = [
+    { warehouse: 'คลังกรุงเทพ', prefix: 'BKK' },
+    { warehouse: 'คลังเชียงใหม่', prefix: 'CNX' },
+  ].flatMap(({ warehouse, prefix }) =>
+    ['A', 'B'].flatMap((zone) =>
+      [1, 2, 3].map((bin) => ({
+        warehouse,
+        code: `${prefix}-${zone}-01-${pad(bin, 2)}`,
+        zone,
+        aisle: '01',
+        bin: pad(bin, 2),
+        active: true,
+        createdAt: nowIso,
+      })),
+    ),
+  )
+  await db.insert(schema.storageLocations).values(locRows)
 
   // ---- sample VINs ---------------------------------------------------------
   await db.insert(schema.vins).values([

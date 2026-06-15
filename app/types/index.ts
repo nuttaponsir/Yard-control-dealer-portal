@@ -318,6 +318,66 @@ export interface AuditLogEntry {
 }
 
 // ============================================================================
+// Phase 3 — Internal WMS + OMS/WMS integration
+// ============================================================================
+export type WmsMode = 'internal' | 'external'
+export type StockMovementKind =
+  | 'receipt'
+  | 'issue'
+  | 'transfer'
+  | 'adjust'
+  | 'return'
+  | 'external_dispatch'
+export type PickTaskStatus = 'open' | 'assigned' | 'picking' | 'picked' | 'cancelled'
+export type PickItemStatus = 'pending' | 'picked'
+
+export interface StorageLocation {
+  id: number
+  warehouse: string
+  code: string
+  zone: string | null
+  aisle: string | null
+  bin: string | null
+  active: boolean
+  createdAt: string
+}
+
+export interface StockMovement {
+  id: number
+  partId: number
+  warehouse: string
+  locationId: number | null
+  kind: StockMovementKind
+  qty: number // signed
+  refType: string | null
+  refId: string | null
+  note: string | null
+  createdBy: number | null
+  createdAt: string
+}
+
+export interface PickTask {
+  id: number
+  pickNumber: string
+  orderId: number
+  warehouse: string
+  status: PickTaskStatus
+  assignedTo: number | null
+  createdAt: string
+  updatedAt: string | null
+}
+
+export interface PickTaskItem {
+  id: number
+  pickTaskId: number
+  partId: number
+  qty: number
+  locationId: number | null
+  pickedQty: number
+  status: PickItemStatus
+}
+
+// ============================================================================
 // Phase H — Issue tracker (auto error capture)
 // ============================================================================
 export type IssueStatus = 'draft' | 'open' | 'in_progress' | 'resolved' | 'closed'

@@ -36,6 +36,20 @@
       "when": 1781369062399,
       "tag": "0004_smart_zaladane",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1781491276204,
+      "tag": "0005_confused_ricochet",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781491938660,
+      "tag": "0006_daily_doctor_faustus",
+      "breakpoints": true
     }
   ]
 }

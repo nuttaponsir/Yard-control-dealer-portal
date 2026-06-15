@@ -6,6 +6,7 @@ import { eq } from 'drizzle-orm'
 import { db, schema } from '../../../db'
 import { requireUser } from '../../../utils/auth'
 import { writeAudit } from '../../../utils/audit'
+import { postMovement } from '../../../utils/wms'
 import type { OrderStatus } from '../../../../app/types'
 
 const CANCELLABLE: OrderStatus[] = ['pending', 'confirming']
@@ -54,6 +55,17 @@ export default defineEventHandler(async (event) => {
           .update(schema.inventory)
           .set({ qtyOnHand: inv.qtyOnHand + item.qty })
           .where(eq(schema.inventory.id, inv.id))
+        // Ledger: record the restock from cancelling the order.
+        await postMovement(tx, {
+          partId: item.partId,
+          warehouse: inv.warehouse,
+          kind: 'receipt',
+          qty: item.qty,
+          refType: 'order',
+          refId: order.poNumber,
+          note: 'ยกเลิกคำสั่งซื้อ',
+          createdBy: user.id,
+        })
       }
     }
 

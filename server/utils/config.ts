@@ -39,6 +39,9 @@ export interface SettingDef {
 // Credit policy modes — referenced by the order placement guard.
 export type CreditEnforcement = 'block' | 'warn' | 'off'
 
+// WMS fulfillment mode — referenced by the OMS/WMS adapter (server/utils/wms).
+export type WmsMode = 'internal' | 'external'
+
 // ---- the catalog -----------------------------------------------------------
 export const SETTINGS: SettingDef[] = [
   {
@@ -82,6 +85,26 @@ export const SETTINGS: SettingDef[] = [
     min: 0,
     max: 100,
   },
+  {
+    key: 'wms_mode',
+    label: 'โหมดคลังสินค้า (WMS)',
+    help: 'internal = ใช้ระบบจัดการคลังภายใน (สร้างใบจัดสินค้าเอง) · external = ส่งให้ WMS ภายนอก',
+    group: 'คลังสินค้า',
+    type: 'enum',
+    default: 'internal',
+    options: [
+      { value: 'internal', label: 'ภายใน (สร้างใบจัดสินค้าในระบบ)' },
+      { value: 'external', label: 'ภายนอก (ส่งให้ WMS ภายนอก)' },
+    ],
+  },
+  {
+    key: 'wms_auto_pick',
+    label: 'สร้างใบจัดสินค้าอัตโนมัติ',
+    help: 'เมื่อเปิด ระบบจะสร้างใบจัดสินค้า (pick task) อัตโนมัติเมื่อคำสั่งซื้อเข้าสู่สถานะ “กำลังแพ็ก” (เฉพาะโหมดภายใน)',
+    group: 'คลังสินค้า',
+    type: 'boolean',
+    default: 'true',
+  },
 ]
 
 const BY_KEY = new Map(SETTINGS.map((s) => [s.key, s]))
@@ -122,4 +145,15 @@ export async function getConfigNumber(key: string): Promise<number> {
 export async function getCreditEnforcement(): Promise<CreditEnforcement> {
   const v = await getConfig('credit_enforcement')
   return v === 'warn' || v === 'off' ? v : 'block'
+}
+
+/** Read a boolean config value ('true' → true; anything else → false). */
+export async function getConfigBool(key: string): Promise<boolean> {
+  return (await getConfig(key)) === 'true'
+}
+
+/** Read the WMS fulfillment mode, validated against the allowed set. */
+export async function getWmsMode(): Promise<WmsMode> {
+  const v = await getConfig('wms_mode')
+  return v === 'external' ? 'external' : 'internal'
 }

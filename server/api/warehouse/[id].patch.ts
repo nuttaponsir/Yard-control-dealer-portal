@@ -9,6 +9,7 @@ import { requireUser } from '../../utils/auth'
 import { parseBody } from '../../utils/validation'
 import { writeAudit } from '../../utils/audit'
 import { notify } from '../../utils/notify'
+import { getWmsAdapter } from '../../utils/wms'
 import { ORDER_STATUS_ORDER } from '../../../app/utils/labels'
 import type { OrderStatus } from '../../../app/types'
 
@@ -67,6 +68,23 @@ export default defineEventHandler(async (event) => {
 
   // Best-effort audit: never blocks/fails the status advance.
   await writeAudit(user.id, 'order.advance', 'order', String(id), `${current}→${next}`)
+
+  // Phase 3 — WMS hand-off when the order enters 'packing'. The adapter
+  // (internal → generate pick task; external → dispatch) is best-effort and
+  // must never fail the status advance.
+  if (next === 'packing') {
+    const lines = await db.query.orderItems.findMany({
+      where: eq(schema.orderItems.orderId, id),
+    })
+    const adapter = await getWmsAdapter()
+    await adapter.onOrderPacking({
+      orderId: id,
+      poNumber: updated!.poNumber,
+      dealerId: updated!.dealerId,
+      lines: lines.map((l) => ({ partId: l.partId, qty: l.qty })),
+      actorId: user.id,
+    })
+  }
 
   // Notify the dealer on shipment + delivery milestones (best-effort).
   if (next === 'shipped' || next === 'delivered') {

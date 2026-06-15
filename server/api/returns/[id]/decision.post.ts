@@ -12,6 +12,7 @@ import { requireUser } from '../../../utils/auth'
 import { parseBody } from '../../../utils/validation'
 import { writeAudit } from '../../../utils/audit'
 import { notify } from '../../../utils/notify'
+import { postMovement } from '../../../utils/wms'
 
 const decisionSchema = z.object({
   decision: z.enum(['approve', 'reject']),
@@ -80,6 +81,16 @@ export default defineEventHandler(async (event) => {
           .update(schema.inventory)
           .set({ qtyOnHand: sql`${schema.inventory.qtyOnHand} + ${it.qty}` })
           .where(eq(schema.inventory.id, inv.id))
+        // Ledger: record the restock against the warehouse it returned to.
+        await postMovement(tx, {
+          partId: it.partId,
+          warehouse: inv.warehouse,
+          kind: 'return',
+          qty: it.qty,
+          refType: 'return',
+          refId: ret.rmaNumber,
+          createdBy: user.id,
+        })
       }
     }
 

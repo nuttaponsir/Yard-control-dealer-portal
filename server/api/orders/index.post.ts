@@ -18,6 +18,7 @@ import { writeAudit } from '../../utils/audit'
 import { notify } from '../../utils/notify'
 import { computeOrderMoney } from '../../utils/pricing'
 import { getCreditEnforcement, getConfigNumber } from '../../utils/config'
+import { postMovement } from '../../utils/wms'
 
 const createOrderSchema = z.object({
   vin: z.string().length(17),
@@ -225,6 +226,17 @@ export default defineEventHandler(async (event) => {
           .update(schema.inventory)
           .set({ qtyOnHand: sql`${schema.inventory.qtyOnHand} - ${take}` })
           .where(eq(schema.inventory.id, r.id))
+        // Ledger: record the issue against the warehouse it was drawn from
+        // (Phase 3 — faithful audit of every qtyOnHand delta).
+        await postMovement(tx, {
+          partId: l.partId,
+          warehouse: r.warehouse,
+          kind: 'issue',
+          qty: -take,
+          refType: 'order',
+          refId: newPo,
+          createdBy: user.id,
+        })
         remaining -= take
       }
     }

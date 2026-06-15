@@ -366,6 +366,83 @@ export const payments = pgTable('payments', {
 })
 
 // ============================================================================
+// Phase 3 — Internal WMS + OMS/WMS integration
+// ----------------------------------------------------------------------------
+// A warehouse-management layer ADDED on top of the existing simple `inventory`
+// table (which stays the authoritative sellable on-hand, decremented at order
+// time). Three new concepts:
+//   • storage_locations — the physical bin master within a warehouse.
+//   • stock_movements    — an append-only ledger posted ALONGSIDE every change
+//                          to inventory.qtyOnHand (issue on order, receipt on
+//                          return, adjust on manual correction). It never drives
+//                          qtyOnHand on its own; it records why a delta happened.
+//   • pick_tasks / items — the fulfillment workflow. In `wms_mode = internal`
+//                          a pick task is generated when an order enters
+//                          'packing'; warehouse staff assign + complete it.
+// The OMS/WMS adapter (server/utils/wms) switches behaviour on the `wms_mode`
+// app-config key: 'internal' runs the picking workflow above; 'external' hands
+// fulfillment to a stubbed external WMS (records a dispatch movement + audit).
+// ============================================================================
+
+// ---- storage locations (bin master) ---------------------------------------
+export const storageLocations = pgTable('storage_locations', {
+  id: serial('id').primaryKey(),
+  warehouse: text('warehouse').notNull(), // matches inventory.warehouse exactly
+  code: text('code').notNull().unique(), // 'BKK-A-01-01'
+  zone: text('zone'), // 'A'
+  aisle: text('aisle'), // '01'
+  bin: text('bin'), // '01'
+  active: boolean('active').notNull().default(true),
+  createdAt: text('created_at').notNull(),
+})
+
+// ---- stock movements (append-only ledger) ----------------------------------
+export const stockMovements = pgTable('stock_movements', {
+  id: serial('id').primaryKey(),
+  partId: integer('part_id')
+    .notNull()
+    .references(() => parts.id),
+  warehouse: text('warehouse').notNull(),
+  locationId: integer('location_id').references(() => storageLocations.id), // nullable
+  kind: text('kind').notNull(), // 'receipt'|'issue'|'transfer'|'adjust'|'return'|'external_dispatch'
+  qty: integer('qty').notNull(), // signed: +adds to on-hand, −removes
+  refType: text('ref_type'), // 'order' | 'return' | 'manual' | 'external'
+  refId: text('ref_id'), // PO / RMA number, or null
+  note: text('note'), // nullable human reason
+  createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }), // nullable; history survives user deletion
+  createdAt: text('created_at').notNull(),
+})
+
+// ---- pick tasks (fulfillment workflow) -------------------------------------
+export const pickTasks = pgTable('pick_tasks', {
+  id: serial('id').primaryKey(),
+  pickNumber: text('pick_number').notNull().unique(), // PICK-2026-######
+  orderId: integer('order_id')
+    .notNull()
+    .references(() => orders.id),
+  warehouse: text('warehouse').notNull(),
+  status: text('status').notNull().default('open'), // 'open'|'assigned'|'picking'|'picked'|'cancelled'
+  assignedTo: integer('assigned_to').references(() => users.id, { onDelete: 'set null' }), // nullable; survives user deletion
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at'), // nullable — set on assign/complete
+})
+
+// ---- pick task items -------------------------------------------------------
+export const pickTaskItems = pgTable('pick_task_items', {
+  id: serial('id').primaryKey(),
+  pickTaskId: integer('pick_task_id')
+    .notNull()
+    .references(() => pickTasks.id),
+  partId: integer('part_id')
+    .notNull()
+    .references(() => parts.id),
+  qty: integer('qty').notNull(), // required quantity
+  locationId: integer('location_id').references(() => storageLocations.id), // suggested bin (nullable)
+  pickedQty: integer('picked_qty').notNull().default(0),
+  status: text('status').notNull().default('pending'), // 'pending' | 'picked'
+})
+
+// ============================================================================
 // Phase H — Issue tracker (auto error capture)
 // ----------------------------------------------------------------------------
 // Client-side error handlers (app/plugins/error-capture.client.ts) POST a row

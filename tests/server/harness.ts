@@ -96,6 +96,18 @@ export async function startServer(): Promise<string> {
   const addressesPost = (await import('../../server/api/addresses/index.post')).default
   const addressesPut = (await import('../../server/api/addresses/[id].put')).default
   const addressesDelete = (await import('../../server/api/addresses/[id].delete')).default
+  // Phase 3 — WMS: storage locations, stock movements, pick tasks
+  const locationsGet = (await import('../../server/api/wms/locations/index.get')).default
+  const locationsPost = (await import('../../server/api/wms/locations/index.post')).default
+  const locationsPut = (await import('../../server/api/wms/locations/[id].put')).default
+  const locationsDelete = (await import('../../server/api/wms/locations/[id].delete')).default
+  const movementsGet = (await import('../../server/api/wms/movements/index.get')).default
+  const movementsPost = (await import('../../server/api/wms/movements/index.post')).default
+  const pickTasksGet = (await import('../../server/api/wms/pick-tasks/index.get')).default
+  const pickTaskGet = (await import('../../server/api/wms/pick-tasks/[id].get')).default
+  const pickTasksPost = (await import('../../server/api/wms/pick-tasks/index.post')).default
+  const pickAssign = (await import('../../server/api/wms/pick-tasks/[id]/assign.post')).default
+  const pickComplete = (await import('../../server/api/wms/pick-tasks/[id]/complete.post')).default
 
   router.post('/api/auth/login', eventHandler(login))
   router.post('/api/auth/logout', eventHandler(logout))
@@ -155,6 +167,17 @@ export async function startServer(): Promise<string> {
   router.post('/api/addresses', eventHandler(addressesPost))
   router.put('/api/addresses/:id', eventHandler(addressesPut))
   router.delete('/api/addresses/:id', eventHandler(addressesDelete))
+  router.get('/api/wms/locations', eventHandler(locationsGet))
+  router.post('/api/wms/locations', eventHandler(locationsPost))
+  router.put('/api/wms/locations/:id', eventHandler(locationsPut))
+  router.delete('/api/wms/locations/:id', eventHandler(locationsDelete))
+  router.get('/api/wms/movements', eventHandler(movementsGet))
+  router.post('/api/wms/movements', eventHandler(movementsPost))
+  router.get('/api/wms/pick-tasks', eventHandler(pickTasksGet))
+  router.get('/api/wms/pick-tasks/:id', eventHandler(pickTaskGet))
+  router.post('/api/wms/pick-tasks', eventHandler(pickTasksPost))
+  router.post('/api/wms/pick-tasks/:id/assign', eventHandler(pickAssign))
+  router.post('/api/wms/pick-tasks/:id/complete', eventHandler(pickComplete))
 
   app.use(router)
 
