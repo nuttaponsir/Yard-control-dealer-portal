@@ -41,6 +41,61 @@ const vehicleLabel = computed(() => {
   return vehicleYear.value ? `${vehicleModel.value} (${vehicleYear.value})` : vehicleModel.value
 })
 
+// ---- inline VIN scan (this page is now the ordering entry point) ----------
+// /vin remains a standalone lookup; ordering scans here. Scanning an installed
+// Autologic VIN unlocks the catalog; a non-installed (or unknown) VIN locks it.
+const vinInput = ref(vin.value ?? '')
+const vinChecking = ref(false)
+const vinError = ref('')
+const vinSearched = ref(false)
+const scannedRow = ref<Vin | null>(null)
+const showDevice = ref(false)
+
+// Device/vehicle row to display: the freshly scanned row, else the deep-link fetch.
+const deviceRow = computed<Vin | null>(() => scannedRow.value ?? vinData.value?.vin ?? null)
+const blocked = computed(() => vinSearched.value && !!scannedRow.value && !scannedRow.value.autologicInstalled)
+const notFound = computed(() => vinSearched.value && !scannedRow.value && !vinError.value)
+
+async function checkVin() {
+  vinError.value = ''
+  const candidate = vinInput.value.trim().toUpperCase()
+  if (candidate.length !== 17) {
+    vinError.value = t('vin.error.length')
+    return
+  }
+  vinChecking.value = true
+  try {
+    const { vin: row } = await $fetch<{ vin: Vin | null }>(`/api/vin/${encodeURIComponent(candidate)}`)
+    scannedRow.value = row
+    vinSearched.value = true
+    if (row?.autologicInstalled) {
+      setActiveVin(row.vin, row.model, row.modelYear)
+      router.replace({ query: { ...route.query, vin: row.vin } })
+    } else {
+      setActiveVin(null) // lock ordering for unknown / not-installed VINs
+    }
+  } catch {
+    vinError.value = t('vin.error.failed')
+  } finally {
+    vinChecking.value = false
+  }
+}
+
+// Arrived with an active VIN (from /vin hand-off or ?vin= deep-link): reflect it
+// and verify the install gate (so a not-installed deep-link can't order).
+onMounted(async () => {
+  if (!vin.value) return
+  vinInput.value = vin.value
+  try {
+    const { vin: row } = await $fetch<{ vin: Vin | null }>(`/api/vin/${encodeURIComponent(vin.value)}`)
+    scannedRow.value = row
+    vinSearched.value = true
+    if (row && !row.autologicInstalled) setActiveVin(null)
+  } catch {
+    // leave the deep-linked VIN as-is on lookup failure
+  }
+})
+
 // ---- categories -----------------------------------------------------------
 // Values stay Thai (the server filters on them); labels are localized for display.
 const CATEGORIES = ['ทั้งหมด', 'กรอง', 'เบรก', 'อุปกรณ์', 'ไฟ', 'ช่วงล่าง', 'ไฟฟ้า']
@@ -97,30 +152,71 @@ async function checkout() {
 
 <template>
   <div class="space-y-4">
-    <!-- VIN gate -->
-    <AppCard
-      v-if="!hasVin"
-      :title="t('catalog.title')"
-      :subtitle="t('catalog.gate.subtitle')"
-    >
-      <EmptyState icon="🧰" :title="t('catalog.gate.title')">
-        {{ t('catalog.gate.body') }}
-        <div class="mt-4">
-          <NuxtLink to="/vin"><AppButton>{{ t('catalog.gate.cta') }}</AppButton></NuxtLink>
+    <!-- VIN scan bar — ordering entry point (VIN-first) -->
+    <AppCard :title="t('catalog.title')" :subtitle="t('catalog.scan.subtitle')">
+      <div class="flex flex-wrap gap-2">
+        <input
+          v-model="vinInput"
+          maxlength="17"
+          :placeholder="t('vin.input.placeholder')"
+          class="code min-w-0 flex-1 rounded-lg border border-app bg-app px-3 py-2 text-sm uppercase text-app outline-none focus:border-brand-600"
+          @keyup.enter="checkVin"
+        >
+        <AppButton :disabled="vinChecking" @click="checkVin">{{ t('vin.check') }}</AppButton>
+        <NuxtLink to="/vin"><AppButton variant="outline">{{ t('catalog.scan.lookup') }}</AppButton></NuxtLink>
+      </div>
+      <p v-if="vinError" class="mt-2 text-xs text-rose-500 dark:text-rose-400">{{ vinError }}</p>
+
+      <!-- installed → status strip + expandable device detail -->
+      <div
+        v-if="hasVin && deviceRow"
+        class="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-950/40"
+      >
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <StatusBadge :status="deviceRow.status" />
+            <span class="text-sm font-medium text-app">{{ deviceRow.model }} · {{ t('vin.year') }} {{ deviceRow.modelYear }}</span>
+            <span class="code text-xs text-muted">{{ deviceRow.vin }}</span>
+          </div>
+          <button class="text-xs font-semibold text-brand-700 hover:underline dark:text-brand-300" @click="showDevice = !showDevice">
+            {{ showDevice ? t('catalog.scan.hideDevice') : t('catalog.scan.showDevice') }}
+          </button>
         </div>
-      </EmptyState>
+        <dl v-if="showDevice" class="mt-3 grid grid-cols-1 gap-3 border-t border-emerald-200 pt-3 sm:grid-cols-2 dark:border-emerald-800">
+          <div><dt class="text-xs text-muted">{{ t('vin.device.package') }}</dt><dd class="text-sm text-app">{{ deviceRow.packageName ?? '-' }}</dd></div>
+          <div><dt class="text-xs text-muted">{{ t('vin.device.serial') }}</dt><dd class="code text-sm text-app">{{ deviceRow.deviceSerial ?? '-' }}</dd></div>
+          <div><dt class="text-xs text-muted">{{ t('vin.device.center') }}</dt><dd class="text-sm text-app">{{ deviceRow.installCenter ?? '-' }}</dd></div>
+          <div><dt class="text-xs text-muted">{{ t('vin.device.firmware') }}</dt><dd class="code text-sm text-app">{{ deviceRow.firmware ?? '-' }}</dd></div>
+        </dl>
+      </div>
+
+      <!-- not installed → blocked -->
+      <div
+        v-else-if="blocked && scannedRow"
+        class="mt-3 rounded-xl border border-rose-200 bg-rose-50 p-4 dark:border-rose-800 dark:bg-rose-950/40"
+      >
+        <p class="font-bold text-rose-700 dark:text-rose-300">🚫 {{ t('vin.blocked.title') }}</p>
+        <p class="mt-1 text-sm text-app">{{ scannedRow.model }} · {{ t('vin.year') }} {{ scannedRow.modelYear }} · <span class="code">{{ scannedRow.vin }}</span></p>
+        <p class="mt-1 text-sm text-muted">{{ t('vin.blocked.body') }}</p>
+      </div>
+
+      <!-- unknown VIN -->
+      <p v-else-if="notFound" class="mt-3 text-sm text-muted">❓ {{ t('catalog.scan.notFound') }}</p>
     </AppCard>
 
-    <div v-else class="grid gap-5 lg:grid-cols-[1fr_340px]">
+    <!-- nothing scanned yet → prompt -->
+    <EmptyState v-if="!hasVin && !blocked && !notFound" icon="🧰" :title="t('catalog.gate.title')">
+      {{ t('catalog.gate.body') }}
+    </EmptyState>
+
+    <div v-else-if="hasVin" class="grid gap-5 lg:grid-cols-[1fr_340px]">
       <!-- catalog -->
       <div class="space-y-4">
         <div class="flex items-start justify-between gap-3">
-          <div>
-            <h2 class="text-lg font-bold text-app">{{ t('catalog.title') }}</h2>
-            <p class="mt-0.5 text-sm text-muted">
-              <template v-if="vehicleLabel">{{ t('catalog.forModel') }} {{ vehicleLabel }} — </template>VIN <span class="code">{{ vin }}</span>
-            </p>
-          </div>
+          <h2 class="text-base font-bold text-app">
+            <template v-if="vehicleLabel">{{ t('catalog.forModel') }} {{ vehicleLabel }}</template>
+            <template v-else>{{ t('catalog.title') }}</template>
+          </h2>
           <DataPorter :export-url="'/api/parts/export'" :export-filename="'catalog.xlsx'" />
         </div>
 
@@ -156,7 +252,7 @@ async function checkout() {
               <span class="rounded-md bg-surface-2 px-2 py-0.5 text-xs text-muted">{{ p.category }}</span>
               <span
                 v-if="p.oem"
-                class="rounded-md bg-brand-900/30 px-2 py-0.5 text-xs font-semibold text-brand-300"
+                class="rounded-md bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700 dark:bg-brand-900/30 dark:text-brand-300"
               >
                 OEM
               </span>

@@ -27,8 +27,8 @@ function active(to: string) {
   >
     <!-- brand -->
     <div class="flex items-center gap-2.5 px-4 py-4">
-      <div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-600 text-lg font-bold text-white">
-        M
+      <div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-600 text-[11px] font-extrabold tracking-tight text-white">
+        <span>JW<span class="text-accent-400">D</span></span>
       </div>
       <div v-if="!collapsed" class="min-w-0">
         <p class="truncate text-sm font-bold text-app">{{ t('brand.name') }}</p>
@@ -60,7 +60,7 @@ function active(to: string) {
           :to="item.to"
           class="mt-0.5 flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition"
           :class="active(item.to)
-            ? 'bg-brand-900/30 text-brand-300'
+            ? 'bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300'
             : 'text-muted hover:bg-surface-2 hover:text-app'"
           :title="t(item.labelKey)"
           @click="open = false"
@@ -83,7 +83,7 @@ function active(to: string) {
         </div>
         <span
           v-if="!collapsed"
-          class="rounded bg-brand-900/40 px-1.5 py-0.5 text-[9px] font-bold uppercase text-brand-300"
+          class="rounded bg-brand-50 px-1.5 py-0.5 text-[9px] font-bold uppercase text-brand-700 dark:bg-brand-900/40 dark:text-brand-300"
         >
           {{ ROLE_LABELS[user.role] ?? user.role }}
         </span>

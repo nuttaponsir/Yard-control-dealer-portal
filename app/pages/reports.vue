@@ -307,7 +307,7 @@ const summaryChips = computed(() => {
         </span>
       </div>
 
-      <div v-if="error" class="rounded-lg border border-rose-900 bg-rose-950/40 px-4 py-2.5 text-sm text-rose-300">
+      <div v-if="error" class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
         {{ t('reports.error') }}
       </div>
       <p v-else-if="loading" class="py-8 text-center text-sm text-muted">{{ t('reports.loading') }}</p>

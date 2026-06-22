@@ -97,11 +97,11 @@ async function onSeed() {
       <!-- top row: brand + language switch -->
       <div class="relative z-10 flex items-center justify-between gap-4">
         <div class="flex items-center gap-3">
-          <div class="grid h-12 w-12 place-items-center rounded-2xl bg-brand-600 text-2xl font-bold text-white shadow-lg shadow-brand-900/50">
-            M
+          <div class="grid h-12 w-12 place-items-center rounded-2xl bg-brand-600 text-sm font-extrabold tracking-tight text-white shadow-lg shadow-brand-900/50">
+            <span>JW<span class="text-accent-400">D</span></span>
           </div>
           <div class="leading-tight">
-            <p class="text-[11px] font-semibold tracking-[0.22em] text-brand-200">{{ t('auth.brand.kicker') }}</p>
+            <p class="text-[11px] font-semibold tracking-[0.22em] text-accent-400">{{ t('auth.brand.kicker') }}</p>
             <p class="text-lg font-bold text-white">{{ t('auth.brand.name') }}</p>
           </div>
         </div>

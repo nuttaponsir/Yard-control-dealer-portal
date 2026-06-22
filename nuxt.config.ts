@@ -18,14 +18,24 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: 'Mitsubishi Dealer Portal',
-      htmlAttrs: { lang: 'th', class: 'dark' },
+      title: 'JWD Autologic — Dealer Portal',
+      // Light by default; the saved preference (if 'dark') is applied pre-paint
+      // by the inline script below to avoid a flash, and toggled at runtime via
+      // useTheme().
+      htmlAttrs: { lang: 'th' },
+      script: [
+        {
+          innerHTML:
+            ";(function(){try{if(localStorage.getItem('jwd-theme')==='dark')document.documentElement.classList.add('dark');}catch(e){}})();",
+          tagPosition: 'head',
+        },
+      ],
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         {
           name: 'description',
-          content: 'Mitsubishi Dealer Portal — VIN-gated spare-parts ordering for the dealer network.',
+          content: 'JWD Autologic Dealer Portal — VIN-gated spare-parts ordering, WMS, and telematics for the dealer network.',
         },
       ],
     },

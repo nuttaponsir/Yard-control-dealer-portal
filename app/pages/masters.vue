@@ -331,8 +331,8 @@ const referenceTabs = computed(() => TABS.filter((tabb) => !tabb.editable))
       v-if="banner"
       class="rounded-lg border px-4 py-2.5 text-sm"
       :class="banner.tone === 'ok'
-        ? 'border-emerald-900 bg-emerald-950/40 text-emerald-300'
-        : 'border-rose-900 bg-rose-950/40 text-rose-300'"
+        ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300'
+        : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300'"
     >
       {{ banner.text }}
     </div>

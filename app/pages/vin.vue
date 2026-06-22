@@ -92,10 +92,10 @@ function fmtDate(iso: string | null) {
 
     <!-- Installed → OK -->
     <AppCard v-else-if="result && result.autologicInstalled">
-      <div class="rounded-xl border border-emerald-800 bg-emerald-950/40 p-5">
+      <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-800 dark:bg-emerald-950/40">
         <div class="flex items-start justify-between gap-3">
           <div>
-            <p class="text-lg font-bold text-emerald-300">{{ t('vin.installed.title') }}</p>
+            <p class="text-lg font-bold text-emerald-700 dark:text-emerald-300">{{ t('vin.installed.title') }}</p>
             <p class="mt-1 text-sm text-app">
               {{ result.model }} · {{ t('vin.year') }} {{ result.modelYear }}
             </p>
@@ -139,9 +139,9 @@ function fmtDate(iso: string | null) {
 
     <!-- Not installed → blocked -->
     <AppCard v-else-if="result && !result.autologicInstalled">
-      <div class="rounded-xl border border-rose-800 bg-rose-950/40 p-6 text-center">
+      <div class="rounded-xl border border-rose-200 bg-rose-50 p-6 text-center dark:border-rose-800 dark:bg-rose-950/40">
         <div class="text-4xl">🚫</div>
-        <p class="mt-3 text-lg font-bold text-rose-300">{{ t('vin.blocked.title') }}</p>
+        <p class="mt-3 text-lg font-bold text-rose-700 dark:text-rose-300">{{ t('vin.blocked.title') }}</p>
         <p class="mt-1 text-sm text-app">{{ result.model }} · {{ t('vin.year') }} {{ result.modelYear }}</p>
         <p class="code mt-1 text-xs text-muted">{{ result.vin }}</p>
         <p class="mt-3 text-sm text-muted">

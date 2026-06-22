@@ -3,7 +3,7 @@
 // Thai by design and are not part of the TH/EN dictionary.
 export const en: Record<string, string> = {
   // ---- brand / chrome ----
-  'brand.name': 'Mitsubishi',
+  'brand.name': 'JWD Autologic',
   'brand.tagline': 'Dealer Portal',
 
   // ---- nav ----
@@ -234,6 +234,12 @@ export const en: Record<string, string> = {
   'dashboard.lowStock.subtitle': 'Items below their reorder point',
   'dashboard.col.part': 'Part',
   'dashboard.col.reorderPoint': 'Reorder point',
+  'dashboard.wms.openPicks': 'Open picks',
+  'dashboard.wms.inProgressPicks': 'In progress',
+  'dashboard.wms.pickedPicks': 'Picked',
+  'dashboard.wms.activeLocations': 'Active bins',
+  'dashboard.wms.recentTitle': 'Recent stock movements',
+  'dashboard.wms.recentSubtitle': 'Latest stock in/out activity',
 
   // ---- vin module ----
   'vin.title': 'Autologic install check',
@@ -267,6 +273,11 @@ export const en: Record<string, string> = {
   'catalog.gate.title': 'VIN check required',
   'catalog.gate.body': 'Please verify an Autologic-installed VIN to unlock the catalog',
   'catalog.gate.cta': 'Go to VIN check',
+  'catalog.scan.subtitle': 'Scan / enter a VIN to start ordering (Autologic required)',
+  'catalog.scan.lookup': 'VIN lookup',
+  'catalog.scan.showDevice': 'Show device detail',
+  'catalog.scan.hideDevice': 'Hide detail',
+  'catalog.scan.notFound': 'VIN not found in the system',
   'catalog.forModel': 'For model',
   'catalog.cat.all': 'All',
   'catalog.cat.filter': 'Filters',
@@ -340,9 +351,9 @@ export const en: Record<string, string> = {
   'auth.seed.error': 'Failed to create demo data (check that the database is running)',
   'auth.hero.title': 'Parts ordering system for the dealer network',
   'auth.hero.body': 'Check a vehicle VIN status, order parts compatible with the model, and track order status all in one place',
-  'auth.brand.kicker': 'MITSUBISHI',
+  'auth.brand.kicker': 'JWD AUTOLOGIC',
   'auth.brand.name': 'Dealer Portal',
-  'auth.footer': '© 2026 Mitsubishi Motors — Authorized partners only',
+  'auth.footer': '© 2026 JWD Autologic — Authorized partners only',
   'auth.login.title': 'Sign in',
   'auth.login.subtitle': 'Enter your email and password to access the Dealer Portal',
   'auth.field.email': 'Email',

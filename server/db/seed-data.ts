@@ -306,7 +306,8 @@ export async function seedDatabase(): Promise<{
       })),
     ),
   )
-  await db.insert(schema.storageLocations).values(locRows)
+  const insertedLocations = await db.insert(schema.storageLocations).values(locRows).returning()
+  const bkkLocId = insertedLocations.find((l) => l.warehouse === 'คลังกรุงเทพ')?.id ?? null
 
   // ---- sample VINs ---------------------------------------------------------
   await db.insert(schema.vins).values([
@@ -390,6 +391,59 @@ export async function seedDatabase(): Promise<{
     )
     insertedOrders.push(order!)
     orderCount++
+  }
+
+  // ---- Phase 3: WMS demo data ----------------------------------------------
+  // Opening stock receipts (so the movement ledger + dashboard have history).
+  const wmsActorId = insertedUsers[0]!.id
+  await db.insert(schema.stockMovements).values(
+    insertedParts.slice(0, 6).map((p, i) => ({
+      partId: p.id,
+      warehouse: 'คลังกรุงเทพ',
+      locationId: bkkLocId,
+      kind: 'receipt' as const,
+      qty: 60 + i * 10,
+      refType: 'manual',
+      refId: null,
+      note: 'ยอดยกมา',
+      createdBy: wmsActorId,
+      createdAt: iso(40 - i),
+    })),
+  )
+
+  // A pick task per order currently in 'packing' (mirrors the internal-WMS
+  // auto-generate on →packing, but seed inserts bypass the API).
+  let pickSeq = 0
+  for (const o of insertedOrders) {
+    if (o.status !== 'packing') continue
+    pickSeq++
+    const its = await db.query.orderItems.findMany({
+      where: eq(schema.orderItems.orderId, o.id),
+    })
+    const [task] = await db
+      .insert(schema.pickTasks)
+      .values({
+        pickNumber: `PICK-2026-${pad(pickSeq, 6)}`,
+        orderId: o.id,
+        warehouse: 'คลังกรุงเทพ',
+        status: 'open',
+        assignedTo: null,
+        createdAt: o.createdAt,
+        updatedAt: null,
+      })
+      .returning()
+    if (its.length) {
+      await db.insert(schema.pickTaskItems).values(
+        its.map((it) => ({
+          pickTaskId: task!.id,
+          partId: it.partId,
+          qty: it.qty,
+          locationId: bkkLocId,
+          pickedQty: 0,
+          status: 'pending' as const,
+        })),
+      )
+    }
   }
 
   // ---- ~6 claims -----------------------------------------------------------

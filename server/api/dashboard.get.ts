@@ -3,7 +3,7 @@
 // rows, and (owner/sales only) the dealer credit panel.
 //  - admin/warehouse: network-wide order KPIs, no credit panel.
 //  - owner/sales: scoped to the user's own dealer (incl. credit panel).
-import { eq, lt } from 'drizzle-orm'
+import { desc, eq, lt } from 'drizzle-orm'
 import { db, schema } from '../db'
 import { requireUser } from '../utils/auth'
 
@@ -71,5 +71,48 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  return { kpis, dailyOrders, lowStock: lowRows, credit }
+  // ---- WMS summary (admin/warehouse only) ----------------------------------
+  // Pick-task status counts, active-bin count, and a recent-movements feed for
+  // the warehouse overview. Null for dealer-scoped roles (no WMS access).
+  let wms:
+    | null
+    | {
+        picks: { open: number; inProgress: number; picked: number }
+        activeLocations: number
+        recentMovements: {
+          partSku: string | null
+          warehouse: string
+          kind: string
+          qty: number
+          createdAt: string
+        }[]
+      } = null
+  if (user.role === 'admin' || user.role === 'warehouse') {
+    const pickRows = await db.query.pickTasks.findMany({ columns: { status: true } })
+    const locRows = await db.query.storageLocations.findMany({ columns: { active: true } })
+    const moveRows = await db.query.stockMovements.findMany({
+      orderBy: [desc(schema.stockMovements.id)],
+      limit: 6,
+    })
+    const partRows = await db.query.parts.findMany({ columns: { id: true, sku: true } })
+    const skuById = new Map(partRows.map((p) => [p.id, p.sku]))
+
+    wms = {
+      picks: {
+        open: pickRows.filter((p) => p.status === 'open').length,
+        inProgress: pickRows.filter((p) => p.status === 'assigned' || p.status === 'picking').length,
+        picked: pickRows.filter((p) => p.status === 'picked').length,
+      },
+      activeLocations: locRows.filter((l) => l.active).length,
+      recentMovements: moveRows.map((m) => ({
+        partSku: skuById.get(m.partId) ?? null,
+        warehouse: m.warehouse,
+        kind: m.kind,
+        qty: m.qty,
+        createdAt: m.createdAt,
+      })),
+    }
+  }
+
+  return { kpis, dailyOrders, lowStock: lowRows, credit, wms }
 })

@@ -36,7 +36,7 @@ function fmt(iso: string) {
   <div class="mt-2 rounded-lg border border-app bg-app p-3">
     <div class="mb-2 flex items-center justify-between">
       <span class="text-[11px] font-semibold text-muted">{{ t('tracking.title') }}</span>
-      <span class="rounded bg-brand-900/40 px-1.5 py-0.5 text-[10px] font-bold text-brand-300">
+      <span class="rounded bg-brand-50 px-1.5 py-0.5 text-[10px] font-bold text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
         {{ statusLabel }}
       </span>
     </div>

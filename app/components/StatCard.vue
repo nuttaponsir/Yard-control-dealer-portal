@@ -9,13 +9,17 @@ withDefaults(
   }>(),
   { tone: 'default', hint: '' },
 )
+// Theme-aware tones: light tints by default, deeper translucent fills in dark.
 const tones: Record<string, string> = {
   default: 'border-app bg-surface text-app',
-  brand: 'border-brand-800 bg-brand-900/30 text-brand-300',
-  amber: 'border-amber-900 bg-amber-950/40 text-amber-300',
-  emerald: 'border-emerald-900 bg-emerald-950/40 text-emerald-300',
-  sky: 'border-sky-900 bg-sky-950/40 text-sky-300',
-  rose: 'border-rose-900 bg-rose-950/40 text-rose-300',
+  brand:
+    'border-brand-200 bg-brand-50 text-brand-700 dark:border-brand-800 dark:bg-brand-900/30 dark:text-brand-300',
+  amber:
+    'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300',
+  emerald:
+    'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300',
+  sky: 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950/40 dark:text-sky-300',
+  rose: 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300',
 }
 </script>
 

@@ -69,8 +69,16 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  // Orders first (they reference addresses), then addresses.
+  // Orders first (their stock-ledger rows + items), then the orders themselves.
   if (createdOrderIds.length) {
+    const ords = await db.query.orders.findMany({
+      where: inArray(schema.orders.id, createdOrderIds),
+      columns: { poNumber: true },
+    })
+    const pos = ords.map((o) => o.poNumber)
+    if (pos.length) {
+      await db.delete(schema.stockMovements).where(inArray(schema.stockMovements.refId, pos))
+    }
     await db.delete(schema.orderItems).where(inArray(schema.orderItems.orderId, createdOrderIds))
     await db.delete(schema.orders).where(inArray(schema.orders.id, createdOrderIds))
   }

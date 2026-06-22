@@ -100,7 +100,7 @@ function creditBarClass(pct: number): string {
       <StatCard :label="t('admin.kpi.totalDealers')" :value="summary.total" tone="brand" />
       <StatCard :label="t('admin.kpi.gradeA')" :value="summary.gradeA" tone="emerald" />
       <StatCard :label="t('admin.kpi.gradeB')" :value="summary.gradeB" tone="sky" />
-      <div class="rounded-xl border border-emerald-900 bg-emerald-950/40 p-4 text-emerald-300">
+      <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
         <p class="flex items-center gap-2 text-2xl font-bold leading-none">
           <span class="h-2.5 w-2.5 rounded-full bg-emerald-400" />
           {{ t('common.online') }}

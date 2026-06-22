@@ -4,7 +4,10 @@ import { ROLE_LABELS } from '~/utils/labels'
 defineProps<{ title: string; subtitle?: string }>()
 const { lang, toggle, t } = useI18n()
 const { user, logout } = useAuth()
+const { theme, toggle: toggleTheme, init: initTheme } = useTheme()
 const sidebarOpen = useState('ui:sidebarOpen', () => false)
+
+onMounted(initTheme)
 
 async function onLogout() {
   await logout()
@@ -28,6 +31,13 @@ async function onLogout() {
     <div class="ml-auto flex items-center gap-1.5 sm:gap-2">
       <NotificationBell v-if="user" />
       <button
+        class="rounded-lg border border-app px-2 py-1.5 text-sm leading-none text-muted hover:bg-surface-2 hover:text-app"
+        :aria-label="theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+        @click="toggleTheme"
+      >
+        {{ theme === 'dark' ? '☀️' : '🌙' }}
+      </button>
+      <button
         class="rounded-lg border border-app px-2.5 py-1.5 text-xs font-semibold text-muted hover:bg-surface-2 hover:text-app"
         @click="toggle"
       >
@@ -35,7 +45,7 @@ async function onLogout() {
       </button>
       <span
         v-if="user"
-        class="rounded bg-brand-900/40 px-2 py-1 text-[10px] font-bold uppercase text-brand-300"
+        class="rounded bg-brand-50 px-2 py-1 text-[10px] font-bold uppercase text-brand-700 dark:bg-brand-900/40 dark:text-brand-300"
       >
         {{ ROLE_LABELS[user.role] ?? user.role }}
       </span>

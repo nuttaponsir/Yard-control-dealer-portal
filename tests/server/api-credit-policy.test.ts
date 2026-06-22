@@ -60,8 +60,18 @@ beforeAll(async () => {
   ownerB = await loginAs(email)
 })
 
+// Orders successfully placed (off/warn modes) — cleaned up in afterAll so the
+// shared DB (and its stock-movement ledger) is left exactly as seeded.
+const createdOrders: { id: number; po: string }[] = []
+
 afterAll(async () => {
   await setPolicy('block') // restore default for other suites
+  // Remove the orders (+ their items + ledger rows) this suite created.
+  for (const o of createdOrders) {
+    await db.delete(schema.stockMovements).where(eq(schema.stockMovements.refId, o.po))
+    await db.delete(schema.orderItems).where(eq(schema.orderItems.orderId, o.id))
+    await db.delete(schema.orders).where(eq(schema.orders.id, o.id))
+  }
   // Restore DLR0002's credit so the seed invariant (used <= limit) holds again.
   await db
     .update(schema.dealers)
@@ -70,11 +80,15 @@ afterAll(async () => {
   await stopServer()
 })
 
-function placeOrder() {
-  return ownerB.post<{ ok: boolean; creditWarn?: boolean }>('/api/orders', {
-    vin: INSTALLED_VIN,
-    items: [{ partId, qty: 1 }],
-  })
+async function placeOrder() {
+  const r = await ownerB.post<{ ok: boolean; creditWarn?: boolean; order?: { id: number }; poNumber?: string }>(
+    '/api/orders',
+    { vin: INSTALLED_VIN, items: [{ partId, qty: 1 }] },
+  )
+  if (r.body?.order?.id && r.body.poNumber) {
+    createdOrders.push({ id: r.body.order.id, po: r.body.poNumber })
+  }
+  return r
 }
 
 describe('credit_enforcement = block', () => {
