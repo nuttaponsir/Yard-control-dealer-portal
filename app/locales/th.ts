@@ -213,6 +213,9 @@ export const th: Record<string, string> = {
   'procurement.unitCost': 'ราคาทุน/หน่วย',
   'procurement.empty': 'ยังไม่มีใบสั่งซื้อ',
   'procurement.error': 'ดำเนินการไม่สำเร็จ',
+  'procurement.fromLowStock': 'เติมจากสต็อกต่ำ',
+  'procurement.pickWarehouseFirst': 'เลือกคลังปลายทางก่อน',
+  'procurement.noLowStock': 'ไม่มีอะไหล่ต่ำกว่าจุดสั่งซ้ำในคลังนี้',
   'procurement.status.draft': 'ร่าง',
   'procurement.status.ordered': 'สั่งแล้ว',
   'procurement.status.partial': 'รับบางส่วน',
@@ -271,6 +274,7 @@ export const th: Record<string, string> = {
   'settings.saved': 'บันทึกการตั้งค่าแล้ว',
   'settings.saving': 'กำลังบันทึก...',
   'settings.error': 'บันทึกการตั้งค่าไม่สำเร็จ',
+  'settings.logoTooLarge': 'ไฟล์โลโก้ใหญ่เกินไป (จำกัด 512KB) — แนะนำใช้ URL แทน',
 
   // ---- page titles / subtitles ----
   'page.dashboard.title': 'ภาพรวม',

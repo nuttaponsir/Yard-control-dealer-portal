@@ -116,8 +116,36 @@ function openCreate() {
 function closeForm() {
   showForm.value = false
 }
+const WAREHOUSES = ['คลังกรุงเทพ', 'คลังเชียงใหม่']
+
 function addItem() {
   form.items.push(emptyItem())
+}
+
+// #6 — prefill the item list from parts below their reorder point in the
+// selected warehouse (suggested top-up qty + part price as cost proxy).
+async function fillFromLowStock() {
+  formError.value = null
+  if (!form.warehouse.trim()) {
+    formError.value = t('procurement.pickWarehouseFirst')
+    return
+  }
+  try {
+    const res = await $fetch<{ items: { partId: number; suggestedQty: number; unitCost: number }[] }>(
+      `/api/procurement/reorder?warehouse=${encodeURIComponent(form.warehouse.trim())}`,
+    )
+    if (!res.items.length) {
+      formError.value = t('procurement.noLowStock')
+      return
+    }
+    form.items = res.items.map((it) => ({
+      partId: it.partId,
+      qtyOrdered: it.suggestedQty,
+      unitCost: it.unitCost,
+    }))
+  } catch (e: unknown) {
+    formError.value = readErr(e)
+  }
 }
 function removeItem(i: number) {
   if (form.items.length > 1) form.items.splice(i, 1)
@@ -294,7 +322,10 @@ const statusClass = (s: PurchaseOrderStatus) => {
             </div>
             <div>
               <label class="mb-1 block text-xs font-medium text-muted">{{ t('procurement.warehouse') }}</label>
-              <input v-model="form.warehouse" type="text" :class="fld">
+              <select v-model="form.warehouse" :class="fld">
+                <option value="" disabled>—</option>
+                <option v-for="w in WAREHOUSES" :key="w" :value="w">{{ w }}</option>
+              </select>
             </div>
             <div>
               <label class="mb-1 block text-xs font-medium text-muted">{{ t('procurement.expected') }}</label>
@@ -336,7 +367,10 @@ const statusClass = (s: PurchaseOrderStatus) => {
                 </button>
               </div>
             </div>
-            <AppButton variant="outline" size="sm" class="mt-2" @click="addItem">+ {{ t('procurement.items') }}</AppButton>
+            <div class="mt-2 flex gap-2">
+              <AppButton variant="outline" size="sm" @click="addItem">+ {{ t('procurement.items') }}</AppButton>
+              <AppButton variant="outline" size="sm" @click="fillFromLowStock">📉 {{ t('procurement.fromLowStock') }}</AppButton>
+            </div>
           </div>
 
           <div class="flex justify-between border-t border-app pt-2 text-sm">

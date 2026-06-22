@@ -212,6 +212,9 @@ export const en: Record<string, string> = {
   'procurement.unitCost': 'Unit cost',
   'procurement.empty': 'No purchase orders yet',
   'procurement.error': 'Operation failed',
+  'procurement.fromLowStock': 'Fill from low stock',
+  'procurement.pickWarehouseFirst': 'Pick a destination warehouse first',
+  'procurement.noLowStock': 'No parts below reorder point in this warehouse',
   'procurement.status.draft': 'Draft',
   'procurement.status.ordered': 'Ordered',
   'procurement.status.partial': 'Partial',
@@ -270,6 +273,7 @@ export const en: Record<string, string> = {
   'settings.saved': 'Settings saved',
   'settings.saving': 'Saving...',
   'settings.error': 'Failed to save settings',
+  'settings.logoTooLarge': 'Logo file too large (512KB max) — use a URL instead',
 
   // ---- page titles / subtitles ----
   'page.dashboard.title': 'Overview',

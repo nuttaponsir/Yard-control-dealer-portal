@@ -113,6 +113,7 @@ export async function startServer(): Promise<string> {
   const telemetryFirmware = (await import('../../server/api/telematics/firmware.post')).default
   const procurementGet = (await import('../../server/api/procurement/index.get')).default
   const procurementSuppliers = (await import('../../server/api/procurement/suppliers.get')).default
+  const procurementReorder = (await import('../../server/api/procurement/reorder.get')).default
   const procurementDetail = (await import('../../server/api/procurement/[id].get')).default
   const procurementPost = (await import('../../server/api/procurement/index.post')).default
   const procurementReceive = (await import('../../server/api/procurement/[id]/receive.post')).default
@@ -198,6 +199,7 @@ export async function startServer(): Promise<string> {
   router.get('/api/telematics', eventHandler(telemetryGet))
   router.post('/api/telematics/firmware', eventHandler(telemetryFirmware))
   router.get('/api/procurement/suppliers', eventHandler(procurementSuppliers))
+  router.get('/api/procurement/reorder', eventHandler(procurementReorder))
   router.get('/api/procurement', eventHandler(procurementGet))
   router.get('/api/procurement/:id', eventHandler(procurementDetail))
   router.post('/api/procurement', eventHandler(procurementPost))

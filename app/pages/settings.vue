@@ -96,6 +96,22 @@ function reset() {
   message.value = null
   error.value = null
 }
+
+// #8 — read an uploaded logo file into the config field as a data URI.
+function onLogoFile(key: string, e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  if (file.size > 512 * 1024) {
+    error.value = t('settings.logoTooLarge')
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = () => {
+    form[key] = String(reader.result)
+    error.value = null
+  }
+  reader.readAsDataURL(file)
+}
 </script>
 
 <template>
@@ -117,8 +133,39 @@ function reset() {
             <p class="code mt-0.5 text-[11px] text-muted/70">{{ s.key }}</p>
           </div>
           <div class="md:w-64">
+            <!-- brand logo: text URL/data-URI + file upload + preview (#8) -->
+            <div v-if="s.key === 'brand_logo_url'" class="space-y-2">
+              <input
+                v-model="form[s.key]"
+                type="text"
+                placeholder="/logo.png · https://… · data:image/…"
+                class="w-full rounded-lg border border-app bg-surface-2 px-3 py-1.5 text-sm text-app focus:border-brand-600 focus:outline-none"
+              >
+              <div class="flex items-center gap-2">
+                <img
+                  v-if="form[s.key]"
+                  :src="form[s.key]"
+                  alt="logo"
+                  class="h-9 w-9 rounded-lg border border-app bg-white object-contain"
+                >
+                <input
+                  type="file"
+                  accept="image/*"
+                  class="min-w-0 flex-1 text-xs text-muted file:mr-2 file:rounded file:border file:border-app file:bg-surface-2 file:px-2 file:py-1 file:text-xs file:text-app"
+                  @change="onLogoFile(s.key, $event)"
+                >
+                <button
+                  v-if="form[s.key]"
+                  type="button"
+                  class="shrink-0 text-xs text-rose-500 hover:underline dark:text-rose-400"
+                  @click="form[s.key] = ''"
+                >
+                  {{ t('common.delete') }}
+                </button>
+              </div>
+            </div>
             <select
-              v-if="s.type === 'enum'"
+              v-else-if="s.type === 'enum'"
               v-model="form[s.key]"
               class="w-full rounded-lg border border-app bg-surface-2 px-3 py-1.5 text-sm text-app focus:border-brand-600 focus:outline-none"
             >
