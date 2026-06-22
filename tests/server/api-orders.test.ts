@@ -6,14 +6,18 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { startServer, stopServer, loginAs } from './harness'
 import { db, schema } from '../../server/db'
 import { eq } from 'drizzle-orm'
+import { ledgerHighWater, cleanupLedgerAbove } from './ledger'
 
 const INSTALLED_VIN = 'MMTJNKB40NH000001'
 const PO_RE = /^PO-\d{4}-\d{6}$/
 
+let ledgerMark = 0
 beforeAll(async () => {
   await startServer()
+  ledgerMark = await ledgerHighWater()
 })
 afterAll(async () => {
+  await cleanupLedgerAbove(ledgerMark)
   await stopServer()
 })
 

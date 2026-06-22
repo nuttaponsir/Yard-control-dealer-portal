@@ -9,6 +9,9 @@ import type { Client } from './harness';
 import { startServer, stopServer, loginAs } from './harness'
 import { db, schema } from '../../server/db'
 import { eq, and, inArray } from 'drizzle-orm'
+import { ledgerHighWater, cleanupLedgerAbove } from './ledger'
+
+let ledgerMark = 0
 
 const INSTALLED_VIN = 'MMTJNKB40NH000001'
 
@@ -34,6 +37,7 @@ async function creditUsed(dealerId: number): Promise<number> {
 
 beforeAll(async () => {
   await startServer()
+  ledgerMark = await ledgerHighWater()
   // Reuse the shared "demo1234" hash so loginAs() works for our test users.
   const admin = await db.query.users.findFirst({ where: eq(schema.users.email, 'admin@demo.co') })
   const hash = admin!.passwordHash
@@ -103,6 +107,7 @@ afterAll(async () => {
   if (dealerIds.length) {
     await db.delete(schema.dealers).where(inArray(schema.dealers.id, dealerIds))
   }
+  await cleanupLedgerAbove(ledgerMark)
   await stopServer()
 })
 

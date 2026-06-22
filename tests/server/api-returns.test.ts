@@ -13,6 +13,9 @@ import type { Client } from './harness';
 import { startServer, stopServer, loginAs } from './harness'
 import { db, schema } from '../../server/db'
 import { and, eq, inArray } from 'drizzle-orm'
+import { ledgerHighWater, cleanupLedgerAbove } from './ledger'
+
+let ledgerMark = 0
 
 const TEST_VIN = 'MMTJNKB40NH000001'
 
@@ -75,6 +78,7 @@ async function insertOrder(po: string, status: string, qty: number) {
 
 beforeAll(async () => {
   await startServer()
+  ledgerMark = await ledgerHighWater()
   const admin = await db.query.users.findFirst({ where: eq(schema.users.email, 'admin@demo.co') })
   const hash = admin!.passwordHash
   const now = new Date().toISOString()
@@ -137,6 +141,7 @@ afterAll(async () => {
   await db.delete(schema.auditLog).where(eq(schema.auditLog.userId, userId))
   await db.delete(schema.users).where(eq(schema.users.id, userId))
   await db.delete(schema.dealers).where(eq(schema.dealers.id, dealerId))
+  await cleanupLedgerAbove(ledgerMark)
   await stopServer()
 })
 

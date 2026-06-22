@@ -57,10 +57,10 @@ const parts = ref<PartLite[]>([])
 
 async function loadRefs() {
   try {
-    const res = await $fetch<{ rows: SupplierLite[] }>('/api/masters/suppliers')
-    suppliers.value = res.rows ?? []
+    // Dedicated procurement endpoint (admin + warehouse), not the admin-only master.
+    const res = await $fetch<{ suppliers: SupplierLite[] }>('/api/procurement/suppliers')
+    suppliers.value = res.suppliers ?? []
   } catch {
-    // Non-admin roles cannot read the suppliers master; leave the picker empty.
     suppliers.value = []
   }
   try {
