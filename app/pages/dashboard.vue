@@ -12,6 +12,9 @@ usePageTitle().set(t('page.dashboard.title'), t('dashboard.subtitle'))
 interface WmsSummary {
   picks: { open: number; inProgress: number; picked: number }
   activeLocations: number
+  openPurchaseOrders: number
+  expiringWarranties: number
+  deviceAlerts: number
   recentMovements: { partSku: string | null; warehouse: string; kind: string; qty: number; createdAt: string }[]
 }
 interface DashboardData {
@@ -94,6 +97,19 @@ const lowStockColumns = computed(() => [
         <StatCard :label="t('dashboard.wms.inProgressPicks')" :value="wms.picks.inProgress" tone="sky" />
         <StatCard :label="t('dashboard.wms.pickedPicks')" :value="wms.picks.picked" tone="emerald" />
         <StatCard :label="t('dashboard.wms.activeLocations')" :value="wms.activeLocations" tone="brand" />
+      </div>
+
+      <!-- Phase 5 module tiles — clickable, jump to the module -->
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <NuxtLink to="/procurement" class="block transition hover:opacity-80">
+          <StatCard :label="t('dashboard.wms.openPOs')" :value="wms.openPurchaseOrders" tone="amber" />
+        </NuxtLink>
+        <NuxtLink to="/warranty" class="block transition hover:opacity-80">
+          <StatCard :label="t('dashboard.wms.expiringWarranties')" :value="wms.expiringWarranties" tone="sky" />
+        </NuxtLink>
+        <NuxtLink to="/telematics" class="block transition hover:opacity-80">
+          <StatCard :label="t('dashboard.wms.deviceAlerts')" :value="wms.deviceAlerts" :tone="wms.deviceAlerts > 0 ? 'rose' : 'emerald'" />
+        </NuxtLink>
       </div>
 
       <AppCard :title="t('dashboard.wms.recentTitle')" :subtitle="t('dashboard.wms.recentSubtitle')">

@@ -346,6 +346,9 @@ export const th: Record<string, string> = {
   'dashboard.wms.activeLocations': 'ตำแหน่งที่ใช้งาน',
   'dashboard.wms.recentTitle': 'ความเคลื่อนไหวสต็อกล่าสุด',
   'dashboard.wms.recentSubtitle': 'รายการเข้า–ออกสต็อกล่าสุด',
+  'dashboard.wms.openPOs': 'ใบสั่งซื้อค้างรับ',
+  'dashboard.wms.expiringWarranties': 'ประกันใกล้หมดอายุ (60 วัน)',
+  'dashboard.wms.deviceAlerts': 'แจ้งเตือนอุปกรณ์',
 
   // ---- vin module ----
   'vin.title': 'ตรวจสอบการติดตั้ง Autologic',

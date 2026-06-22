@@ -79,6 +79,9 @@ export default defineEventHandler(async (event) => {
     | {
         picks: { open: number; inProgress: number; picked: number }
         activeLocations: number
+        openPurchaseOrders: number
+        expiringWarranties: number
+        deviceAlerts: number
         recentMovements: {
           partSku: string | null
           warehouse: string
@@ -97,6 +100,14 @@ export default defineEventHandler(async (event) => {
     const partRows = await db.query.parts.findMany({ columns: { id: true, sku: true } })
     const skuById = new Map(partRows.map((p) => [p.id, p.sku]))
 
+    // Phase 5 module tiles: inbound POs awaiting receipt, warranties expiring in
+    // the next 60 days, and unresolved device alerts (warning/critical events).
+    const poRows = await db.query.purchaseOrders.findMany({ columns: { status: true } })
+    const warRows = await db.query.warranties.findMany({ columns: { status: true, expiresAt: true } })
+    const evRows = await db.query.telematicsEvents.findMany({ columns: { severity: true } })
+    const todayStr = new Date().toISOString().slice(0, 10)
+    const soonStr = new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10)
+
     wms = {
       picks: {
         open: pickRows.filter((p) => p.status === 'open').length,
@@ -104,6 +115,11 @@ export default defineEventHandler(async (event) => {
         picked: pickRows.filter((p) => p.status === 'picked').length,
       },
       activeLocations: locRows.filter((l) => l.active).length,
+      openPurchaseOrders: poRows.filter((p) => p.status === 'ordered' || p.status === 'partial').length,
+      expiringWarranties: warRows.filter(
+        (w) => w.status === 'active' && w.expiresAt >= todayStr && w.expiresAt <= soonStr,
+      ).length,
+      deviceAlerts: evRows.filter((e) => e.severity === 'warning' || e.severity === 'critical').length,
       recentMovements: moveRows.map((m) => ({
         partSku: skuById.get(m.partId) ?? null,
         warehouse: m.warehouse,

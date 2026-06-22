@@ -345,6 +345,9 @@ export const en: Record<string, string> = {
   'dashboard.wms.activeLocations': 'Active bins',
   'dashboard.wms.recentTitle': 'Recent stock movements',
   'dashboard.wms.recentSubtitle': 'Latest stock in/out activity',
+  'dashboard.wms.openPOs': 'Open purchase orders',
+  'dashboard.wms.expiringWarranties': 'Warranties expiring (60d)',
+  'dashboard.wms.deviceAlerts': 'Device alerts',
 
   // ---- vin module ----
   'vin.title': 'Autologic install check',
