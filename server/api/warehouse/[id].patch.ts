@@ -10,6 +10,8 @@ import { parseBody } from '../../utils/validation'
 import { writeAudit } from '../../utils/audit'
 import { notify } from '../../utils/notify'
 import { getWmsAdapter } from '../../utils/wms'
+import { getConfigBool } from '../../utils/config'
+import { registerWarrantiesForOrder } from '../../utils/warranty'
 import { ORDER_STATUS_ORDER } from '../../../app/utils/labels'
 import type { OrderStatus } from '../../../app/types'
 
@@ -84,6 +86,16 @@ export default defineEventHandler(async (event) => {
       lines: lines.map((l) => ({ partId: l.partId, qty: l.qty })),
       actorId: user.id,
     })
+  }
+
+  // Phase 5 (#7) — auto-register part warranties on delivery (best-effort,
+  // config-gated). Never fails the status advance.
+  if (next === 'delivered' && (await getConfigBool('warranty_auto_register'))) {
+    try {
+      await registerWarrantiesForOrder(id, user.id)
+    } catch (err) {
+      console.error('[warranty] auto-register failed', { orderId: id }, err)
+    }
   }
 
   // Notify the dealer on shipment + delivery milestones (best-effort).

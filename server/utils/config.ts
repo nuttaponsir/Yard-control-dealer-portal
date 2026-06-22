@@ -106,6 +106,14 @@ export const SETTINGS: SettingDef[] = [
     default: 'true',
   },
   {
+    key: 'warranty_auto_register',
+    label: 'ออกใบรับประกันอัตโนมัติ',
+    help: 'เมื่อเปิด ระบบจะออกใบรับประกันให้อะไหล่แต่ละชิ้นอัตโนมัติเมื่อคำสั่งซื้อถูกส่งถึง (ตามระยะรับประกันของอะไหล่)',
+    group: 'การรับประกัน',
+    type: 'boolean',
+    default: 'true',
+  },
+  {
     key: 'brand_logo_url',
     label: 'โลโก้ (URL รูปภาพ)',
     help: 'วาง URL หรือ data URI ของโลโก้ เพื่อแสดงแทนตราอักษร JWD (เว้นว่าง = ใช้ตราอักษร) เช่น /logo.png หรือ https://...',

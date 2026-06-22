@@ -137,6 +137,7 @@ export async function seedDatabase(): Promise<{
     { key: 'credit_overlimit_pct', value: '0' },
     { key: 'wms_mode', value: 'internal' },
     { key: 'wms_auto_pick', value: 'true' },
+    { key: 'warranty_auto_register', value: 'true' },
   ])
 
   // ---- 100 dealers ---------------------------------------------------------
