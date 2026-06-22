@@ -160,11 +160,12 @@ const showDetail = ref(false)
 const detailLoading = ref(false)
 const detailError = ref<string | null>(null)
 const receiving = ref(false)
-const detail = ref<{
+interface PoDetail {
   purchaseOrder: PurchaseOrder
   supplierName: string
   items: PoItemRow[]
-} | null>(null)
+}
+const detail = ref<PoDetail | null>(null)
 
 async function openDetail(po: PoListRow) {
   showDetail.value = true
@@ -172,7 +173,7 @@ async function openDetail(po: PoListRow) {
   detailError.value = null
   detail.value = null
   try {
-    detail.value = await $fetch(`/api/procurement/${po.id}`)
+    detail.value = await $fetch<PoDetail>(`/api/procurement/${po.id}`)
   } catch (e: unknown) {
     detailError.value = readErr(e)
   } finally {
@@ -196,7 +197,7 @@ async function receiveAll() {
   try {
     await $fetch(`/api/procurement/${detail.value.purchaseOrder.id}/receive`, { method: 'POST' })
     // refresh both the detail and the list
-    detail.value = await $fetch(`/api/procurement/${detail.value.purchaseOrder.id}`)
+    detail.value = await $fetch<PoDetail>(`/api/procurement/${detail.value.purchaseOrder.id}`)
     await load()
   } catch (e: unknown) {
     detailError.value = readErr(e)

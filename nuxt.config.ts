@@ -8,6 +8,11 @@ export default defineNuxtConfig({
   ssr: true,
   modules: ['@nuxt/eslint'],
   devtools: { enabled: false },
+  // Typed routes generate a huge route union that overflows vue-tsc
+  // ("TS2321: Excessive stack depth") during `nuxt typecheck`. We address
+  // routes by plain string paths, so the typed-route checking buys nothing
+  // here — turn it off to keep typecheck green.
+  experimental: { typedPages: false },
   css: ['~/assets/css/main.css'],
   vite: {
     plugins: [tailwindcss()],
