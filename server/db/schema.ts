@@ -472,3 +472,110 @@ export const issues = pgTable('issues', {
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at'), // nullable — set on status change
 })
+
+// ============================================================================
+// Phase 5 — completeness modules (Telematics · Procurement · Transfer/Count ·
+// Warranty). All additive on top of the existing WMS + order domain.
+// ============================================================================
+
+// ---- Autologic telematics events (device activity / alert log) -------------
+// One row per device event, keyed by VIN (the device registry lives on `vins`).
+// Drives the telematics fleet view + alert feed; firmware pushes append a row.
+export const telematicsEvents = pgTable('telematics_events', {
+  id: serial('id').primaryKey(),
+  vin: text('vin').notNull(), // references vins.vin (text), not enforced as FK
+  type: text('type').notNull(), // 'connect'|'disconnect'|'fault'|'firmware_update'|'geofence'|'heartbeat'
+  severity: text('severity').notNull().default('info'), // 'info'|'warning'|'critical'
+  message: text('message').notNull(),
+  detail: text('detail'), // optional JSON blob (firmware version, fault code, …)
+  createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: text('created_at').notNull(),
+})
+
+// ---- procurement: inbound purchase orders to suppliers ---------------------
+// The supply-side counterpart of sales orders. Receiving a PO line increments
+// inventory.qtyOnHand + posts a 'receipt' stock_movement (the WMS inbound seam).
+export const purchaseOrders = pgTable('purchase_orders', {
+  id: serial('id').primaryKey(),
+  poNumber: text('po_number').notNull().unique(), // PO-IN-2026-######
+  supplierId: integer('supplier_id')
+    .notNull()
+    .references(() => suppliers.id),
+  warehouse: text('warehouse').notNull(), // destination warehouse (matches inventory.warehouse)
+  status: text('status').notNull().default('draft'), // 'draft'|'ordered'|'partial'|'received'|'cancelled'
+  totalCost: integer('total_cost').notNull().default(0), // THB
+  note: text('note'),
+  expectedAt: text('expected_at'), // nullable ISO
+  createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at'),
+})
+
+export const purchaseOrderItems = pgTable('purchase_order_items', {
+  id: serial('id').primaryKey(),
+  purchaseOrderId: integer('purchase_order_id')
+    .notNull()
+    .references(() => purchaseOrders.id),
+  partId: integer('part_id')
+    .notNull()
+    .references(() => parts.id),
+  qtyOrdered: integer('qty_ordered').notNull(),
+  qtyReceived: integer('qty_received').notNull().default(0),
+  unitCost: integer('unit_cost').notNull(), // THB
+})
+
+// ---- stock transfers between warehouses ------------------------------------
+// Completing a transfer posts an 'issue' from the source + a 'receipt' to the
+// destination and moves inventory.qtyOnHand across both rows.
+export const stockTransfers = pgTable('stock_transfers', {
+  id: serial('id').primaryKey(),
+  transferNo: text('transfer_no').notNull().unique(), // TRF-2026-######
+  partId: integer('part_id')
+    .notNull()
+    .references(() => parts.id),
+  fromWarehouse: text('from_warehouse').notNull(),
+  toWarehouse: text('to_warehouse').notNull(),
+  qty: integer('qty').notNull(),
+  status: text('status').notNull().default('requested'), // 'requested'|'completed'|'cancelled'
+  note: text('note'),
+  createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: text('created_at').notNull(),
+  completedAt: text('completed_at'), // nullable ISO
+})
+
+// ---- cycle counts (physical stock-take reconciliation) ---------------------
+// Posting a count writes inventory.qtyOnHand to the counted figure and records
+// an 'adjust' stock_movement for the (counted − system) variance.
+export const cycleCounts = pgTable('cycle_counts', {
+  id: serial('id').primaryKey(),
+  countNo: text('count_no').notNull().unique(), // CNT-2026-######
+  partId: integer('part_id')
+    .notNull()
+    .references(() => parts.id),
+  warehouse: text('warehouse').notNull(),
+  systemQty: integer('system_qty').notNull(), // on-hand at count time
+  countedQty: integer('counted_qty').notNull(),
+  variance: integer('variance').notNull(), // countedQty − systemQty
+  status: text('status').notNull().default('open'), // 'open'|'posted'|'cancelled'
+  note: text('note'),
+  createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: text('created_at').notNull(),
+  postedAt: text('posted_at'), // nullable ISO
+})
+
+// ---- warranty registrations (per VIN + part) -------------------------------
+// Coverage record opened when a part is installed/sold against a vehicle.
+export const warranties = pgTable('warranties', {
+  id: serial('id').primaryKey(),
+  warrantyNo: text('warranty_no').notNull().unique(), // WAR-2026-######
+  vin: text('vin').notNull(), // references vins.vin (text)
+  partSku: text('part_sku').notNull(),
+  dealerId: integer('dealer_id').references(() => dealers.id), // nullable — filing dealer
+  startDate: text('start_date').notNull(), // ISO date
+  months: integer('months').notNull(), // coverage length
+  expiresAt: text('expires_at').notNull(), // ISO date (startDate + months)
+  status: text('status').notNull().default('active'), // 'active'|'expired'|'void'
+  note: text('note'),
+  createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: text('created_at').notNull(),
+})

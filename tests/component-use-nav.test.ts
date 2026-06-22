@@ -19,20 +19,24 @@ function visibleKeysFor(role: Role): string[] {
 }
 
 describe('useNav role gating (SPEC §2.3 / AC-1.x)', () => {
-  it('exposes exactly the 18 modules in order', () => {
+  it('exposes exactly the 22 modules in order', () => {
     expect(useNav().map((i) => i.labelKey)).toEqual([
       'nav.dashboard',
       'nav.vin',
+      'nav.telematics',
       'nav.catalog',
       'nav.orders',
       'nav.addresses',
       'nav.payments',
       'nav.returns',
       'nav.claims',
+      'nav.warranty',
       'nav.warehouse',
       'nav.picking',
       'nav.locations',
       'nav.movements',
+      'nav.procurement',
+      'nav.stockOps',
       'nav.reports',
       'nav.masters',
       'nav.users',
@@ -42,20 +46,24 @@ describe('useNav role gating (SPEC §2.3 / AC-1.x)', () => {
     ])
   })
 
-  it('AC-1.1: admin sees all 18 modules', () => {
+  it('AC-1.1: admin sees all 22 modules', () => {
     expect(visibleKeysFor('admin')).toEqual([
       'nav.dashboard',
       'nav.vin',
+      'nav.telematics',
       'nav.catalog',
       'nav.orders',
       'nav.addresses',
       'nav.payments',
       'nav.returns',
       'nav.claims',
+      'nav.warranty',
       'nav.warehouse',
       'nav.picking',
       'nav.locations',
       'nav.movements',
+      'nav.procurement',
+      'nav.stockOps',
       'nav.reports',
       'nav.masters',
       'nav.users',
@@ -65,42 +73,50 @@ describe('useNav role gating (SPEC §2.3 / AC-1.x)', () => {
     ])
   })
 
-  it('AC-1.2: owner sees dashboard, vin, catalog, orders, addresses, payments, returns, claims (no warehouse/admin)', () => {
+  it('AC-1.2: owner sees dashboard, vin, telematics, catalog, orders, addresses, payments, returns, claims, warranty', () => {
     expect(visibleKeysFor('owner')).toEqual([
       'nav.dashboard',
       'nav.vin',
+      'nav.telematics',
       'nav.catalog',
       'nav.orders',
       'nav.addresses',
       'nav.payments',
       'nav.returns',
       'nav.claims',
+      'nav.warranty',
     ])
   })
 
-  it('AC-1.3: sales sees dashboard, vin, catalog, orders, addresses, payments, returns', () => {
+  it('AC-1.3: sales sees dashboard, vin, telematics, catalog, orders, addresses, payments, returns, warranty', () => {
     expect(visibleKeysFor('sales')).toEqual([
       'nav.dashboard',
       'nav.vin',
+      'nav.telematics',
       'nav.catalog',
       'nav.orders',
       'nav.addresses',
       'nav.payments',
       'nav.returns',
+      'nav.warranty',
     ])
   })
 
-  it('AC-1.4: warehouse sees dashboard, vin, orders, returns, claims, warehouse + WMS (no catalog/admin)', () => {
+  it('AC-1.4: warehouse sees ops modules + telematics/warranty (no catalog/admin)', () => {
     expect(visibleKeysFor('warehouse')).toEqual([
       'nav.dashboard',
       'nav.vin',
+      'nav.telematics',
       'nav.orders',
       'nav.returns',
       'nav.claims',
+      'nav.warranty',
       'nav.warehouse',
       'nav.picking',
       'nav.locations',
       'nav.movements',
+      'nav.procurement',
+      'nav.stockOps',
     ])
   })
 

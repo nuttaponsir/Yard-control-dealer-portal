@@ -108,6 +108,22 @@ export async function startServer(): Promise<string> {
   const pickTasksPost = (await import('../../server/api/wms/pick-tasks/index.post')).default
   const pickAssign = (await import('../../server/api/wms/pick-tasks/[id]/assign.post')).default
   const pickComplete = (await import('../../server/api/wms/pick-tasks/[id]/complete.post')).default
+  // Phase 5 — Telematics, Procurement, Stock-ops, Warranty
+  const telemetryGet = (await import('../../server/api/telematics/index.get')).default
+  const telemetryFirmware = (await import('../../server/api/telematics/firmware.post')).default
+  const procurementGet = (await import('../../server/api/procurement/index.get')).default
+  const procurementDetail = (await import('../../server/api/procurement/[id].get')).default
+  const procurementPost = (await import('../../server/api/procurement/index.post')).default
+  const procurementReceive = (await import('../../server/api/procurement/[id]/receive.post')).default
+  const transfersGet = (await import('../../server/api/stock-ops/transfers/index.get')).default
+  const transfersPost = (await import('../../server/api/stock-ops/transfers/index.post')).default
+  const transferComplete = (await import('../../server/api/stock-ops/transfers/[id]/complete.post')).default
+  const countsGet = (await import('../../server/api/stock-ops/counts/index.get')).default
+  const countsPost = (await import('../../server/api/stock-ops/counts/index.post')).default
+  const countPost = (await import('../../server/api/stock-ops/counts/[id]/post.post')).default
+  const warrantyGet = (await import('../../server/api/warranty/index.get')).default
+  const warrantyPost = (await import('../../server/api/warranty/index.post')).default
+  const warrantyVoid = (await import('../../server/api/warranty/[id]/void.post')).default
 
   router.post('/api/auth/login', eventHandler(login))
   router.post('/api/auth/logout', eventHandler(logout))
@@ -178,6 +194,21 @@ export async function startServer(): Promise<string> {
   router.post('/api/wms/pick-tasks', eventHandler(pickTasksPost))
   router.post('/api/wms/pick-tasks/:id/assign', eventHandler(pickAssign))
   router.post('/api/wms/pick-tasks/:id/complete', eventHandler(pickComplete))
+  router.get('/api/telematics', eventHandler(telemetryGet))
+  router.post('/api/telematics/firmware', eventHandler(telemetryFirmware))
+  router.get('/api/procurement', eventHandler(procurementGet))
+  router.get('/api/procurement/:id', eventHandler(procurementDetail))
+  router.post('/api/procurement', eventHandler(procurementPost))
+  router.post('/api/procurement/:id/receive', eventHandler(procurementReceive))
+  router.get('/api/stock-ops/transfers', eventHandler(transfersGet))
+  router.post('/api/stock-ops/transfers', eventHandler(transfersPost))
+  router.post('/api/stock-ops/transfers/:id/complete', eventHandler(transferComplete))
+  router.get('/api/stock-ops/counts', eventHandler(countsGet))
+  router.post('/api/stock-ops/counts', eventHandler(countsPost))
+  router.post('/api/stock-ops/counts/:id/post', eventHandler(countPost))
+  router.get('/api/warranty', eventHandler(warrantyGet))
+  router.post('/api/warranty', eventHandler(warrantyPost))
+  router.post('/api/warranty/:id/void', eventHandler(warrantyVoid))
 
   app.use(router)
 

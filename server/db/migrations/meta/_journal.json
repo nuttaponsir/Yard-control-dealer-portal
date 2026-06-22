@@ -50,6 +50,13 @@
       "when": 1781491938660,
       "tag": "0006_daily_doctor_faustus",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1782114161392,
+      "tag": "0007_mute_blue_shield",
+      "breakpoints": true
     }
   ]
 }

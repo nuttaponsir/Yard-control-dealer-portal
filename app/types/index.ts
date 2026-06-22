@@ -403,3 +403,106 @@ export interface Issue {
   createdAt: string
   updatedAt: string | null
 }
+
+// ============================================================================
+// Phase 5 — completeness modules
+// ============================================================================
+
+// ---- Autologic telematics --------------------------------------------------
+export type TelematicsEventType =
+  | 'connect'
+  | 'disconnect'
+  | 'fault'
+  | 'firmware_update'
+  | 'geofence'
+  | 'heartbeat'
+export type TelematicsSeverity = 'info' | 'warning' | 'critical'
+
+export interface TelematicsEvent {
+  id: number
+  vin: string
+  type: TelematicsEventType
+  severity: TelematicsSeverity
+  message: string
+  detail: string | null
+  createdBy: number | null
+  createdAt: string
+}
+
+// ---- procurement -----------------------------------------------------------
+export type PurchaseOrderStatus = 'draft' | 'ordered' | 'partial' | 'received' | 'cancelled'
+
+export interface PurchaseOrder {
+  id: number
+  poNumber: string
+  supplierId: number
+  warehouse: string
+  status: PurchaseOrderStatus
+  totalCost: number
+  note: string | null
+  expectedAt: string | null
+  createdBy: number | null
+  createdAt: string
+  updatedAt: string | null
+}
+
+export interface PurchaseOrderItem {
+  id: number
+  purchaseOrderId: number
+  partId: number
+  qtyOrdered: number
+  qtyReceived: number
+  unitCost: number
+}
+
+// ---- stock transfers + cycle counts ----------------------------------------
+export type StockTransferStatus = 'requested' | 'completed' | 'cancelled'
+
+export interface StockTransfer {
+  id: number
+  transferNo: string
+  partId: number
+  fromWarehouse: string
+  toWarehouse: string
+  qty: number
+  status: StockTransferStatus
+  note: string | null
+  createdBy: number | null
+  createdAt: string
+  completedAt: string | null
+}
+
+export type CycleCountStatus = 'open' | 'posted' | 'cancelled'
+
+export interface CycleCount {
+  id: number
+  countNo: string
+  partId: number
+  warehouse: string
+  systemQty: number
+  countedQty: number
+  variance: number
+  status: CycleCountStatus
+  note: string | null
+  createdBy: number | null
+  createdAt: string
+  postedAt: string | null
+}
+
+// ---- warranty --------------------------------------------------------------
+export type WarrantyStatus = 'active' | 'expired' | 'void'
+
+export interface Warranty {
+  id: number
+  warrantyNo: string
+  vin: string
+  partSku: string
+  dealerId: number | null
+  startDate: string
+  months: number
+  expiresAt: string
+  status: WarrantyStatus
+  note: string | null
+  createdBy: number | null
+  createdAt: string
+}

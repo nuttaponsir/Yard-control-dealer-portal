@@ -39,7 +39,9 @@ export async function seedDatabase(): Promise<{
     ${schema.suppliers}, ${schema.creditTerms}, ${schema.priceTiers},
     ${schema.claimReasons}, ${schema.provinces}, ${schema.appConfig},
     ${schema.storageLocations}, ${schema.stockMovements},
-    ${schema.pickTasks}, ${schema.pickTaskItems}
+    ${schema.pickTasks}, ${schema.pickTaskItems},
+    ${schema.telematicsEvents}, ${schema.purchaseOrders}, ${schema.purchaseOrderItems},
+    ${schema.stockTransfers}, ${schema.cycleCounts}, ${schema.warranties}
     RESTART IDENTITY CASCADE`)
 
   // ---- Phase B Wave 1 master tables (seed before dependents) ---------------
@@ -533,6 +535,62 @@ export async function seedDatabase(): Promise<{
     .update(schema.dealers)
     .set({ creditUsed: Math.max(0, dlr1Outstanding - onAccountTotal) })
     .where(eq(schema.dealers.id, dlr1))
+
+  // ---- Phase 5: completeness-module demo data ------------------------------
+  // Telematics events for the installed devices.
+  await db.insert(schema.telematicsEvents).values([
+    { vin: installedVins[0]!, type: 'connect', severity: 'info', message: 'อุปกรณ์ออนไลน์', detail: null, createdBy: wmsActorId, createdAt: iso(2) },
+    { vin: installedVins[0]!, type: 'heartbeat', severity: 'info', message: 'สัญญาณปกติ', detail: null, createdBy: wmsActorId, createdAt: iso(1) },
+    { vin: installedVins[1]!, type: 'fault', severity: 'warning', message: 'แรงดันแบตเตอรี่ต่ำ', detail: 'code=BATT_LOW', createdBy: wmsActorId, createdAt: iso(1) },
+    { vin: installedVins[2]!, type: 'firmware_update', severity: 'info', message: 'อัปเดตเฟิร์มแวร์เป็น v4.1.0', detail: 'v4.1.0', createdBy: wmsActorId, createdAt: iso(3) },
+    { vin: installedVins[1]!, type: 'geofence', severity: 'warning', message: 'ออกนอกพื้นที่ที่กำหนด', detail: null, createdBy: wmsActorId, createdAt: iso(0) },
+  ])
+
+  // One ordered + one partially-received purchase order.
+  const supA = insertedSuppliers[0]!.id
+  const poParts = insertedParts.slice(0, 3)
+  const [po1] = await db
+    .insert(schema.purchaseOrders)
+    .values({
+      poNumber: 'PO-IN-2026-000001',
+      supplierId: supA,
+      warehouse: 'คลังกรุงเทพ',
+      status: 'ordered',
+      totalCost: poParts.reduce((s, p) => s + p.price * 10, 0),
+      note: 'เติมสต็อกประจำเดือน',
+      expectedAt: iso(-5),
+      createdBy: wmsActorId,
+      createdAt: iso(6),
+      updatedAt: null,
+    })
+    .returning()
+  await db.insert(schema.purchaseOrderItems).values(
+    poParts.map((p) => ({ purchaseOrderId: po1!.id, partId: p.id, qtyOrdered: 10, qtyReceived: 0, unitCost: p.price })),
+  )
+
+  // A couple of warranty registrations on installed VINs.
+  const warrantySkus = insertedParts.slice(0, 2).map((p) => p.sku)
+  await db.insert(schema.warranties).values(
+    warrantySkus.map((sku, i) => {
+      const start = iso(30 + i * 10)
+      const startDate = start.slice(0, 10)
+      const d = new Date(startDate)
+      d.setMonth(d.getMonth() + 12)
+      return {
+        warrantyNo: `WAR-2026-${pad(i + 1, 6)}`,
+        vin: installedVins[i]!,
+        partSku: sku!,
+        dealerId: dlr1,
+        startDate,
+        months: 12,
+        expiresAt: d.toISOString().slice(0, 10),
+        status: 'active' as const,
+        note: null,
+        createdBy: wmsActorId,
+        createdAt: start,
+      }
+    }),
+  )
 
   return { dealers: insertedDealers.length, users: 4, orders: orderCount, payments: paymentCount }
 }
