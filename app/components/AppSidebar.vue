@@ -1,16 +1,28 @@
 <script setup lang="ts">
 // SHARED layout component (SA owns). Role-gated nav from useNav().
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ROLE_LABELS } from '~/utils/labels'
 
 const { t } = useI18n()
 const items = useNav()
 const { can, user } = useAuth()
+const { logoUrl, load: loadBrand } = useBrand()
 const collapsed = ref(false)
 // Mobile drawer open state — shared with AppHeader's hamburger + the layout
 // backdrop. On lg+ the sidebar is always docked so this flag is irrelevant there.
 const open = useState('ui:sidebarOpen', () => false)
 const route = useRoute()
+
+onMounted(loadBrand)
+
+// Only the items this role can see; a group header renders when the group
+// changes from the previous visible item.
+const visibleItems = computed(() => items.filter((i) => can(i.roles)))
+function showGroupHeader(idx: number): string | null {
+  const g = visibleItems.value[idx]?.group
+  if (!g) return null
+  return idx === 0 || visibleItems.value[idx - 1]?.group !== g ? g : null
+}
 
 function active(to: string) {
   return route.path === to || route.path.startsWith(to + '/')
@@ -27,7 +39,13 @@ function active(to: string) {
   >
     <!-- brand -->
     <div class="flex items-center gap-2.5 px-4 py-4">
-      <div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-600 text-[11px] font-extrabold tracking-tight text-white">
+      <img
+        v-if="logoUrl"
+        :src="logoUrl"
+        :alt="t('brand.name')"
+        class="h-9 w-9 shrink-0 rounded-xl bg-white object-contain"
+      >
+      <div v-else class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-600 text-[11px] font-extrabold tracking-tight text-white">
         <span>JW<span class="text-accent-400">D</span></span>
       </div>
       <div v-if="!collapsed" class="min-w-0">
@@ -54,9 +72,15 @@ function active(to: string) {
 
     <!-- nav -->
     <nav class="flex-1 overflow-y-auto px-2 pb-4">
-      <template v-for="item in items" :key="item.to">
+      <template v-for="(item, idx) in visibleItems" :key="item.to">
+        <!-- section header (skipped when collapsed) -->
+        <p
+          v-if="!collapsed && showGroupHeader(idx)"
+          class="px-3 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-wider text-muted/70"
+        >
+          {{ t(showGroupHeader(idx)!) }}
+        </p>
         <NuxtLink
-          v-if="can(item.roles)"
           :to="item.to"
           class="mt-0.5 flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition"
           :class="active(item.to)

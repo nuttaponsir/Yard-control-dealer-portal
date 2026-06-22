@@ -9,6 +9,8 @@ definePageMeta({ layout: 'auth' })
 
 const { login, seedDemo, demoAccounts, demoPassword } = useAuth()
 const { t, lang } = useI18n()
+const { logoUrl, load: loadBrand } = useBrand()
+onMounted(loadBrand)
 
 const email = ref('admin@demo.co')
 const password = ref(demoPassword)
@@ -97,7 +99,13 @@ async function onSeed() {
       <!-- top row: brand + language switch -->
       <div class="relative z-10 flex items-center justify-between gap-4">
         <div class="flex items-center gap-3">
-          <div class="grid h-12 w-12 place-items-center rounded-2xl bg-brand-600 text-sm font-extrabold tracking-tight text-white shadow-lg shadow-brand-900/50">
+          <img
+            v-if="logoUrl"
+            :src="logoUrl"
+            :alt="t('auth.brand.kicker')"
+            class="h-12 w-12 rounded-2xl bg-white object-contain shadow-lg shadow-brand-900/50"
+          >
+          <div v-else class="grid h-12 w-12 place-items-center rounded-2xl bg-brand-600 text-sm font-extrabold tracking-tight text-white shadow-lg shadow-brand-900/50">
             <span>JW<span class="text-accent-400">D</span></span>
           </div>
           <div class="leading-tight">

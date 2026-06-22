@@ -165,11 +165,17 @@ export const th: Record<string, string> = {
   'nav.warranty': 'การรับประกัน',
   'nav.procurement': 'จัดซื้อ/รับเข้า',
   'nav.stockOps': 'โอนย้าย/ตรวจนับ',
+  'navGroup.autologic': 'Autologic',
+  'navGroup.sales': 'การขายและบริการ',
+  'navGroup.warehouse': 'คลังสินค้า',
+  'navGroup.system': 'ระบบ',
 
   // ---- Telematics (Phase 5) ----
   'page.telematics.title': 'Autologic Telematics',
   'page.telematics.subtitle': 'สถานะอุปกรณ์ติดรถและเหตุการณ์ล่าสุด',
   'telematics.devices': 'อุปกรณ์',
+  'telematics.searchPlaceholder': 'ค้นหา/ตรวจสอบ VIN (17 หลัก)',
+  'telematics.lookup': 'ตรวจสอบ VIN',
   'telematics.events': 'เหตุการณ์ล่าสุด',
   'telematics.device': 'อุปกรณ์/รถ',
   'telematics.status': 'สถานะ',

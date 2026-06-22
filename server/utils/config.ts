@@ -105,6 +105,14 @@ export const SETTINGS: SettingDef[] = [
     type: 'boolean',
     default: 'true',
   },
+  {
+    key: 'brand_logo_url',
+    label: 'โลโก้ (URL รูปภาพ)',
+    help: 'วาง URL หรือ data URI ของโลโก้ เพื่อแสดงแทนตราอักษร JWD (เว้นว่าง = ใช้ตราอักษร) เช่น /logo.png หรือ https://...',
+    group: 'แบรนด์',
+    type: 'string',
+    default: '',
+  },
 ]
 
 const BY_KEY = new Map(SETTINGS.map((s) => [s.key, s]))

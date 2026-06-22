@@ -198,6 +198,8 @@ export interface NavItem {
   icon: string
   roles?: Role[]
   badge?: string
+  /** Optional sidebar section header this item sits under (i18n key). */
+  group?: string
 }
 
 // ---- client cart line (useCart) --------------------------------------------

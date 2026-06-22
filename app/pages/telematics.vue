@@ -4,7 +4,7 @@
 // device's lastConnectedAt (online if within the last 7 days). admin/warehouse
 // can push a firmware version per device via a small modal.
 import { computed, ref } from 'vue'
-import type { TelematicsEvent, TelematicsEventType, TelematicsSeverity } from '~/types'
+import type { TelematicsEvent, TelematicsSeverity, Vin } from '~/types'
 
 interface Device {
   vin: string
@@ -30,6 +30,37 @@ const { data, refresh } = await useFetch<{ devices: Device[]; events: Telematics
 )
 const devices = computed(() => data.value?.devices ?? [])
 const events = computed(() => data.value?.events ?? [])
+
+// ---- VIN search + lookup (absorbed from the old /vin page) ------------------
+// Filters the device table; for a full 17-char VIN not in the fleet it falls
+// back to GET /api/vin to report Autologic install status (incl. not-installed).
+const vinQuery = ref('')
+const lookupRow = ref<Vin | null>(null)
+const lookupSearched = ref(false)
+const lookupError = ref('')
+
+const filteredDevices = computed(() => {
+  const q = vinQuery.value.trim().toLowerCase()
+  if (!q) return devices.value
+  return devices.value.filter(
+    (d) => d.vin.toLowerCase().includes(q) || d.model.toLowerCase().includes(q),
+  )
+})
+
+async function lookupVin() {
+  lookupError.value = ''
+  lookupRow.value = null
+  lookupSearched.value = false
+  const vin = vinQuery.value.trim().toUpperCase()
+  if (vin.length !== 17) return // shorter queries just filter the table
+  try {
+    const { vin: row } = await $fetch<{ vin: Vin | null }>(`/api/vin/${encodeURIComponent(vin)}`)
+    lookupRow.value = row
+    lookupSearched.value = true
+  } catch {
+    lookupError.value = t('telematics.error')
+  }
+}
 
 const ONLINE_WINDOW_MS = 7 * 86400000
 function isOnline(d: Device): boolean {
@@ -106,7 +137,38 @@ const fld =
   <div class="space-y-5">
     <!-- devices -->
     <AppCard :title="t('telematics.devices')">
-      <EmptyState v-if="!devices.length" icon="📡" :title="t('telematics.empty')" />
+      <!-- VIN search + lookup (consolidated from the old VIN-check page) -->
+      <div class="mb-3 flex flex-wrap gap-2">
+        <input
+          v-model="vinQuery"
+          maxlength="17"
+          :placeholder="t('telematics.searchPlaceholder')"
+          class="code min-w-0 flex-1 rounded-lg border border-app bg-app px-3 py-2 text-sm uppercase text-app outline-none focus:border-brand-600"
+          @keyup.enter="lookupVin"
+        >
+        <AppButton variant="outline" :disabled="vinQuery.trim().length !== 17" @click="lookupVin">
+          {{ t('telematics.lookup') }}
+        </AppButton>
+      </div>
+
+      <!-- inline lookup result for a full VIN not in the fleet table -->
+      <div
+        v-if="lookupSearched && lookupRow && !filteredDevices.some((d) => d.vin === lookupRow!.vin)"
+        class="mb-3 rounded-xl border p-3 text-sm"
+        :class="lookupRow.autologicInstalled
+          ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40'
+          : 'border-rose-200 bg-rose-50 dark:border-rose-800 dark:bg-rose-950/40'"
+      >
+        <span class="font-semibold" :class="lookupRow.autologicInstalled ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'">
+          {{ lookupRow.autologicInstalled ? t('telematics.online') : t('vin.blocked.title') }}
+        </span>
+        <span class="ml-2 text-app">{{ lookupRow.model }} · {{ lookupRow.modelYear }}</span>
+        <span class="code ml-2 text-xs text-muted">{{ lookupRow.vin }}</span>
+      </div>
+      <p v-else-if="lookupSearched && !lookupRow" class="mb-3 text-sm text-muted">❓ {{ t('catalog.scan.notFound') }}</p>
+      <p v-if="lookupError" class="mb-3 text-sm text-rose-500 dark:text-rose-400">{{ lookupError }}</p>
+
+      <EmptyState v-if="!filteredDevices.length" icon="📡" :title="t('telematics.empty')" />
       <div v-else class="overflow-x-auto">
         <table class="w-full text-left text-sm">
           <thead>
@@ -119,7 +181,7 @@ const fld =
             </tr>
           </thead>
           <tbody>
-            <tr v-for="d in devices" :key="d.vin" class="border-b border-app/60">
+            <tr v-for="d in filteredDevices" :key="d.vin" class="border-b border-app/60">
               <td class="px-3 py-2">
                 <div class="font-medium text-app">{{ d.model }} <span class="text-muted">{{ d.modelYear }}</span></div>
                 <div class="font-mono text-xs text-muted">{{ d.vin }}</div>

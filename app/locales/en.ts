@@ -164,11 +164,17 @@ export const en: Record<string, string> = {
   'nav.warranty': 'Warranty',
   'nav.procurement': 'Procurement',
   'nav.stockOps': 'Transfers / Counts',
+  'navGroup.autologic': 'Autologic',
+  'navGroup.sales': 'Sales & Service',
+  'navGroup.warehouse': 'Warehouse',
+  'navGroup.system': 'System',
 
   // ---- Telematics (Phase 5) ----
   'page.telematics.title': 'Autologic Telematics',
   'page.telematics.subtitle': 'Device connectivity status and recent events',
   'telematics.devices': 'Devices',
+  'telematics.searchPlaceholder': 'Search / check a VIN (17 chars)',
+  'telematics.lookup': 'Check VIN',
   'telematics.events': 'Recent events',
   'telematics.device': 'Device / vehicle',
   'telematics.status': 'Status',

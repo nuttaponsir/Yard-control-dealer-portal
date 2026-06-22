@@ -163,7 +163,7 @@ async function checkout() {
           @keyup.enter="checkVin"
         >
         <AppButton :disabled="vinChecking" @click="checkVin">{{ t('vin.check') }}</AppButton>
-        <NuxtLink to="/vin"><AppButton variant="outline">{{ t('catalog.scan.lookup') }}</AppButton></NuxtLink>
+        <NuxtLink to="/telematics"><AppButton variant="outline">{{ t('catalog.scan.lookup') }}</AppButton></NuxtLink>
       </div>
       <p v-if="vinError" class="mt-2 text-xs text-rose-500 dark:text-rose-400">{{ vinError }}</p>
 
