@@ -106,6 +106,14 @@ export const SETTINGS: SettingDef[] = [
     default: 'true',
   },
   {
+    key: 'telematics_ingest_token',
+    label: 'โทเคนรับข้อมูลอุปกรณ์ (Telematics)',
+    help: 'ตั้งค่าโทเคนลับ เพื่อให้อุปกรณ์/เกตเวย์ Autologic ส่งเหตุการณ์เข้าระบบผ่านส่วนหัว x-ingest-token (เว้นว่าง = ปิดการรับผ่านโทเคน, รับเฉพาะผู้ดูแล/คลังที่ล็อกอิน)',
+    group: 'Autologic',
+    type: 'string',
+    default: '',
+  },
+  {
     key: 'warranty_auto_register',
     label: 'ออกใบรับประกันอัตโนมัติ',
     help: 'เมื่อเปิด ระบบจะออกใบรับประกันให้อะไหล่แต่ละชิ้นอัตโนมัติเมื่อคำสั่งซื้อถูกส่งถึง (ตามระยะรับประกันของอะไหล่)',

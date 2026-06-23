@@ -4,7 +4,7 @@
 // device's lastConnectedAt (online if within the last 7 days). admin/warehouse
 // can push a firmware version per device via a small modal.
 import { computed, ref } from 'vue'
-import type { TelematicsEvent, TelematicsSeverity, Vin } from '~/types'
+import type { TelematicsEvent, TelematicsEventType, TelematicsSeverity, Vin } from '~/types'
 
 interface Device {
   vin: string
@@ -131,6 +131,26 @@ async function submitPush() {
 
 const fld =
   'w-full rounded-lg border border-app bg-surface-2 px-3 py-1.5 text-sm text-app focus:border-brand-600 focus:outline-none'
+
+// ---- simulate a device event (demo of the ingestion endpoint) --------------
+const SIM_TYPES: TelematicsEventType[] = ['connect', 'heartbeat', 'fault', 'geofence', 'firmware_update', 'disconnect']
+const simVin = ref('')
+const simType = ref<TelematicsEventType>('heartbeat')
+const simBusy = ref(false)
+
+async function simulateEvent() {
+  if (!simVin.value) simVin.value = devices.value[0]?.vin ?? ''
+  if (!simVin.value) return
+  simBusy.value = true
+  try {
+    await $fetch('/api/telematics/ingest', { method: 'POST', body: { vin: simVin.value, type: simType.value } })
+    await refresh()
+  } catch {
+    // ignore — best-effort demo control
+  } finally {
+    simBusy.value = false
+  }
+}
 </script>
 
 <template>
@@ -210,6 +230,20 @@ const fld =
 
     <!-- events -->
     <AppCard :title="t('telematics.events')">
+      <!-- simulate a device event (demonstrates the ingestion endpoint) -->
+      <div v-if="canPush" class="mb-3 flex flex-wrap items-center gap-2 border-b border-app pb-3">
+        <select v-model="simVin" :class="fld" class="max-w-[220px]">
+          <option value="" disabled>{{ t('telematics.device') }}</option>
+          <option v-for="d in devices" :key="d.vin" :value="d.vin">{{ d.model }} · {{ d.vin }}</option>
+        </select>
+        <select v-model="simType" :class="fld" class="max-w-[170px]">
+          <option v-for="ty in SIM_TYPES" :key="ty" :value="ty">{{ t(`telematics.type.${ty}`) }}</option>
+        </select>
+        <AppButton variant="outline" size="sm" :disabled="simBusy" @click="simulateEvent">
+          {{ t('telematics.simulate') }}
+        </AppButton>
+      </div>
+
       <EmptyState v-if="!events.length" icon="📭" :title="t('telematics.eventsEmpty')" />
       <ul v-else class="divide-y divide-app/60">
         <li v-for="e in events" :key="e.id" class="flex items-start gap-3 py-2.5">

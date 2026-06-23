@@ -32,6 +32,7 @@ interface TelematicsEvent {
 let admin: Client
 let owner: Client // DLR0001
 let warehouse: Client
+let base = ''
 
 // Capture for exact restore.
 let origFirmware: string | null = null
@@ -40,7 +41,7 @@ let origLastConnectedAt: string | null = null
 const createdEventIds: number[] = []
 
 beforeAll(async () => {
-  await startServer()
+  base = await startServer()
   admin = await loginAs('admin@demo.co')
   owner = await loginAs('owner@demo.co') // DLR0001
   warehouse = await loginAs('warehouse@demo.co')
@@ -62,6 +63,8 @@ afterAll(async () => {
     .update(schema.vins)
     .set({ firmware: origFirmware, lastConnectedAt: origLastConnectedAt })
     .where(eq(schema.vins.vin, INSTALLED_VIN))
+  // Remove the ingest token row this suite set (back to the seeded default).
+  await db.delete(schema.appConfig).where(eq(schema.appConfig.key, 'telematics_ingest_token'))
   await stopServer()
 })
 
@@ -132,5 +135,60 @@ describe('POST /api/telematics/firmware', () => {
       firmware: TEST_FIRMWARE,
     })
     expect(r.status).toBe(400)
+  })
+})
+
+describe('POST /api/telematics/ingest (#4 device event ingestion)', () => {
+  it('admin session ingests an event → 200, creates it + bumps lastConnectedAt', async () => {
+    const r = await admin.post<{ ok: boolean; event: { id: number; severity: string } }>(
+      '/api/telematics/ingest',
+      { vin: INSTALLED_VIN, type: 'fault' },
+    )
+    expect(r.status).toBe(200)
+    expect(r.body.event.severity).toBe('critical') // default for 'fault'
+    createdEventIds.push(r.body.event.id)
+
+    const vinRow = await db.query.vins.findFirst({ where: eq(schema.vins.vin, INSTALLED_VIN) })
+    expect(vinRow!.lastConnectedAt).toBeTruthy()
+  })
+
+  it('unauthenticated (no session, no token) → 401', async () => {
+    const res = await fetch(`${base}/api/telematics/ingest`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ vin: INSTALLED_VIN, type: 'heartbeat' }),
+    })
+    expect(res.status).toBe(401)
+  })
+
+  it('device token (x-ingest-token) is accepted without a session', async () => {
+    // Set the ingest token via config, then post as an unauthenticated device.
+    await db
+      .insert(schema.appConfig)
+      .values({ key: 'telematics_ingest_token', value: 'test-ingest-tok' })
+      .onConflictDoUpdate({ target: schema.appConfig.key, set: { value: 'test-ingest-tok' } })
+
+    const res = await fetch(`${base}/api/telematics/ingest`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-ingest-token': 'test-ingest-tok' },
+      body: JSON.stringify({ vin: INSTALLED_VIN, type: 'heartbeat' }),
+    })
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as { ok: boolean; event: { id: number } }
+    expect(body.ok).toBe(true)
+    createdEventIds.push(body.event.id)
+
+    // A wrong token is still rejected.
+    const bad = await fetch(`${base}/api/telematics/ingest`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-ingest-token': 'wrong' },
+      body: JSON.stringify({ vin: INSTALLED_VIN, type: 'heartbeat' }),
+    })
+    expect(bad.status).toBe(401)
+  })
+
+  it('unknown VIN → 404', async () => {
+    const r = await admin.post('/api/telematics/ingest', { vin: 'ZZZZZZZZZZZZZZZZZ', type: 'connect' })
+    expect(r.status).toBe(404)
   })
 })

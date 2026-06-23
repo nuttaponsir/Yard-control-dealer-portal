@@ -175,6 +175,7 @@ export const en: Record<string, string> = {
   'telematics.devices': 'Devices',
   'telematics.searchPlaceholder': 'Search / check a VIN (17 chars)',
   'telematics.lookup': 'Check VIN',
+  'telematics.simulate': 'Simulate event',
   'telematics.events': 'Recent events',
   'telematics.device': 'Device / vehicle',
   'telematics.status': 'Status',

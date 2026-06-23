@@ -176,6 +176,7 @@ export const th: Record<string, string> = {
   'telematics.devices': 'อุปกรณ์',
   'telematics.searchPlaceholder': 'ค้นหา/ตรวจสอบ VIN (17 หลัก)',
   'telematics.lookup': 'ตรวจสอบ VIN',
+  'telematics.simulate': 'จำลองเหตุการณ์',
   'telematics.events': 'เหตุการณ์ล่าสุด',
   'telematics.device': 'อุปกรณ์/รถ',
   'telematics.status': 'สถานะ',

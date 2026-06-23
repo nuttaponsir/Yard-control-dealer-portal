@@ -111,6 +111,7 @@ export async function startServer(): Promise<string> {
   // Phase 5 — Telematics, Procurement, Stock-ops, Warranty
   const telemetryGet = (await import('../../server/api/telematics/index.get')).default
   const telemetryFirmware = (await import('../../server/api/telematics/firmware.post')).default
+  const telemetryIngest = (await import('../../server/api/telematics/ingest.post')).default
   const procurementGet = (await import('../../server/api/procurement/index.get')).default
   const procurementSuppliers = (await import('../../server/api/procurement/suppliers.get')).default
   const procurementReorder = (await import('../../server/api/procurement/reorder.get')).default
@@ -198,6 +199,7 @@ export async function startServer(): Promise<string> {
   router.post('/api/wms/pick-tasks/:id/complete', eventHandler(pickComplete))
   router.get('/api/telematics', eventHandler(telemetryGet))
   router.post('/api/telematics/firmware', eventHandler(telemetryFirmware))
+  router.post('/api/telematics/ingest', eventHandler(telemetryIngest))
   router.get('/api/procurement/suppliers', eventHandler(procurementSuppliers))
   router.get('/api/procurement/reorder', eventHandler(procurementReorder))
   router.get('/api/procurement', eventHandler(procurementGet))
