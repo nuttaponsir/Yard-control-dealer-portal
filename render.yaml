@@ -27,6 +27,11 @@ services:
       # Render generates a strong random value and keeps it stable across deploys.
       - key: NUXT_SESSION_SECRET
         generateValue: true
+      # DEMO/TRIAL instance only: lets anyone load the sample dataset + demo
+      # users via the "สร้าง/รีเฟรชข้อมูลตัวอย่าง" button on /auth (the prod image
+      # has no shell seed). Set to "false" (or remove) for a real production DB.
+      - key: ALLOW_DEMO_SEED
+        value: "true"
       # Internal connection string from the managed DB below (no SSL needed —
       # app and DB share Render's private network).
       - key: DATABASE_URL

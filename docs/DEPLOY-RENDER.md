@@ -64,22 +64,31 @@ free `*.onrender.com` subdomain. Migrations run automatically on every deploy.
 
 ## Step 4 — Seed demo data (once)
 
-A fresh DB is empty; you must seed before you can log in (HTTP seeding is
-disabled in production — `/api/auth/seed-demo` returns 403).
+A fresh DB is empty; you must seed before anyone can log in.
 
-1. Render → **`dealer-portal-db`** service → **Connect** tab → copy the
-   **External Database URL**.
-2. On your machine, run (append `?sslmode=require` — required for external
-   connections; postgres-js reads it from the URL):
-   ```bash
+### Option A — one click (recommended for a demo/trial) ⭐
+`render.yaml` ships `ALLOW_DEMO_SEED=true`, which re-enables the in-app seeder
+on this instance. Just:
+
+1. Open the deployed URL → **`/auth`**.
+2. Click **"สร้าง / รีเฟรชข้อมูลตัวอย่าง"** (create/refresh sample data).
+3. Log in (password `demo1234`): `admin@demo.co`, `owner@demo.co`,
+   `sales@demo.co`, `warehouse@demo.co`.
+
+> The button reseeds the **entire** DB (throwaway demo data). For a real
+> production database, set `ALLOW_DEMO_SEED=false` on the web service after the
+> first seed (or remove it) so the public endpoint is disabled again, then seed
+> via Option B only.
+
+### Option B — ops seed (for a real/locked-down DB)
+With `ALLOW_DEMO_SEED` off, seed from your machine over the external URL:
+
+1. Render → **`dealer-portal-db`** → **Connect** → copy the **External Database URL**.
+2. ```bash
    cd ~/claude/dealer-portal
    DATABASE_URL='<EXTERNAL_URL>?sslmode=require' npm run db:seed
    ```
-   Example external URL:
-   `postgres://dealerportal:xxxx@dpg-xxxx.singapore-postgres.render.com/dealerportal`
-3. Log in (password `demo1234`):
-   - `admin@demo.co` (admin)
-   - `owner@demo.co`, `sales@demo.co`, `warehouse@demo.co`
+   Example: `postgres://dealerportal:xxxx@dpg-xxxx.singapore-postgres.render.com/dealerportal`
 
 ---
 
