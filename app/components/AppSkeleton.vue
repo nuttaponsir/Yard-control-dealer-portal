@@ -4,11 +4,12 @@
 // placeholders instead of a blank or empty-state flash. `rows` cards, each a
 // pulsing bar block, theme-aware via the surface tokens.
 withDefaults(defineProps<{ rows?: number; cards?: number }>(), { rows: 4, cards: 0 })
+const { t } = useI18n()
 </script>
 
 <template>
   <div class="space-y-4" aria-busy="true" aria-live="polite">
-    <span class="sr-only">กำลังโหลด…</span>
+    <span class="sr-only">{{ t('common.loadingEllipsis') }}</span>
 
     <!-- KPI / stat card grid (optional) -->
     <div v-if="cards > 0" class="grid grid-cols-2 gap-4 lg:grid-cols-4">

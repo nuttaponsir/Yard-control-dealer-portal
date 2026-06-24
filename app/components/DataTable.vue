@@ -9,6 +9,7 @@ interface Column {
   align?: 'left' | 'right'
 }
 defineProps<{ columns: Column[]; rows: T[] }>()
+const { t } = useI18n()
 </script>
 
 <template>
@@ -45,7 +46,7 @@ defineProps<{ columns: Column[]; rows: T[] }>()
         </tr>
         <tr v-if="!rows.length">
           <td :colspan="columns.length" class="px-4 py-8 text-center text-muted">
-            ไม่มีข้อมูล
+            {{ t('common.empty') }}
           </td>
         </tr>
       </tbody>

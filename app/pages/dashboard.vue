@@ -115,8 +115,48 @@ const lowStockColumns = computed(() => [
           <StatCard :label="t('dashboard.wms.deviceAlerts')" :value="wms.deviceAlerts" :tone="wms.deviceAlerts > 0 ? 'rose' : 'emerald'" />
         </NuxtLink>
       </div>
+    </template>
 
-      <AppCard :title="t('dashboard.wms.recentTitle')" :subtitle="t('dashboard.wms.recentSubtitle')">
+    <!-- Daily-orders chart — full width (30 daily bars use the space) -->
+    <AppCard :title="t('dashboard.chart.title')" :subtitle="t('dashboard.chart.subtitle')">
+      <div class="flex h-56 gap-1.5">
+        <div
+          v-for="d in dailyOrders"
+          :key="d.date"
+          class="flex flex-1 flex-col items-center gap-1"
+        >
+          <span class="text-[10px] font-semibold text-muted">{{ d.count }}</span>
+          <!-- bar track: flex-1 gives a definite height so the bar's % resolves -->
+          <div class="flex w-full flex-1 items-end">
+            <div
+              class="w-full rounded-t bg-brand-600"
+              :style="{ height: barHeight(d.count) + '%', minHeight: d.count > 0 ? '4px' : '0' }"
+              :title="`${d.date}: ${d.count}`"
+            />
+          </div>
+          <span class="text-[9px] text-muted">{{ shortDate(d.date) }}</span>
+        </div>
+      </div>
+    </AppCard>
+
+    <!-- Lower row: low-stock table beside recent movements (admin/warehouse).
+         For dealer roles (no WMS) the table fills the full width. -->
+    <div class="grid gap-5" :class="wms ? 'lg:grid-cols-3' : ''">
+      <AppCard
+        :title="t('dashboard.lowStock.title')"
+        :subtitle="t('dashboard.lowStock.subtitle')"
+        :class="wms ? 'lg:col-span-2' : ''"
+      >
+        <DataTable :columns="lowStockColumns" :rows="lowStock">
+          <template #cell-qtyOnHand="{ row }">
+            <span :class="row.qtyOnHand < row.reorderPoint ? 'font-bold text-rose-400' : 'text-app'">
+              {{ row.qtyOnHand }}
+            </span>
+          </template>
+        </DataTable>
+      </AppCard>
+
+      <AppCard v-if="wms" :title="t('dashboard.wms.recentTitle')" :subtitle="t('dashboard.wms.recentSubtitle')">
         <EmptyState v-if="wms.recentMovements.length === 0" icon="📈" :title="t('movements.empty')" />
         <ul v-else class="divide-y divide-app">
           <li
@@ -137,40 +177,7 @@ const lowStockColumns = computed(() => [
           </li>
         </ul>
       </AppCard>
-    </template>
-
-    <!-- Daily-orders chart -->
-    <AppCard :title="t('dashboard.chart.title')" :subtitle="t('dashboard.chart.subtitle')">
-      <div class="flex h-44 gap-1.5">
-        <div
-          v-for="d in dailyOrders"
-          :key="d.date"
-          class="flex flex-1 flex-col items-center gap-1"
-        >
-          <span class="text-[10px] font-semibold text-muted">{{ d.count }}</span>
-          <!-- bar track: flex-1 gives a definite height so the bar's % resolves -->
-          <div class="flex w-full flex-1 items-end">
-            <div
-              class="w-full rounded-t bg-brand-600"
-              :style="{ height: barHeight(d.count) + '%', minHeight: d.count > 0 ? '4px' : '0' }"
-              :title="`${d.date}: ${d.count}`"
-            />
-          </div>
-          <span class="text-[9px] text-muted">{{ shortDate(d.date) }}</span>
-        </div>
-      </div>
-    </AppCard>
-
-    <!-- Low-stock table -->
-    <AppCard :title="t('dashboard.lowStock.title')" :subtitle="t('dashboard.lowStock.subtitle')">
-      <DataTable :columns="lowStockColumns" :rows="lowStock">
-        <template #cell-qtyOnHand="{ row }">
-          <span :class="row.qtyOnHand < row.reorderPoint ? 'font-bold text-rose-400' : 'text-app'">
-            {{ row.qtyOnHand }}
-          </span>
-        </template>
-      </DataTable>
-    </AppCard>
+    </div>
     </template>
   </div>
 </template>

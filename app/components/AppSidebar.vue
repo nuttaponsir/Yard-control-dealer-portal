@@ -55,7 +55,7 @@ function active(to: string) {
       <!-- desktop collapse toggle -->
       <button
         class="ml-auto hidden rounded-lg p-1 text-muted hover:bg-surface-2 lg:block"
-        :aria-label="collapsed ? 'Expand' : 'Collapse'"
+        :aria-label="collapsed ? t('ui.sidebar.expand') : t('ui.sidebar.collapse')"
         @click="collapsed = !collapsed"
       >
         {{ collapsed ? '»' : '«' }}
@@ -63,7 +63,7 @@ function active(to: string) {
       <!-- mobile drawer close -->
       <button
         class="ml-auto rounded-lg p-1 text-muted hover:bg-surface-2 lg:hidden"
-        aria-label="Close menu"
+        :aria-label="t('ui.menu.close')"
         @click="open = false"
       >
         ✕

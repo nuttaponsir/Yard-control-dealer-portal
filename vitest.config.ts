@@ -47,6 +47,8 @@ export default defineConfig({
           name: 'component',
           environment: 'happy-dom',
           include: ['tests/component-*.{test,spec}.ts'],
+          // Shim Nuxt auto-imports (useState/useI18n) for bare SFC mounts.
+          setupFiles: ['./tests/setup-component.ts'],
         },
       },
     ],

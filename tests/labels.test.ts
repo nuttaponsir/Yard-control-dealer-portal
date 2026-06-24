@@ -28,7 +28,8 @@ describe('status labels', () => {
     expect(statusLabel('mystery')).toBe('mystery')
   })
 
-  it('formats THB amounts', () => {
-    expect(thb(1250000)).toBe('฿1,250,000')
+  it('formats THB amounts with 2 decimals', () => {
+    expect(thb(1250000)).toBe('฿1,250,000.00')
+    expect(thb(337)).toBe('฿337.00')
   })
 })

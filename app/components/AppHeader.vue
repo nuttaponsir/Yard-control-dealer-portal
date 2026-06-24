@@ -19,7 +19,7 @@ async function onLogout() {
   <header class="flex items-center gap-3 border-b border-app bg-surface px-4 py-3 sm:gap-4 sm:px-6">
     <button
       class="-ml-1 rounded-lg p-1.5 text-muted hover:bg-surface-2 hover:text-app lg:hidden"
-      aria-label="Open menu"
+      :aria-label="t('ui.menu.open')"
       @click="sidebarOpen = true"
     >
       <span class="block text-xl leading-none">☰</span>
@@ -32,7 +32,7 @@ async function onLogout() {
       <NotificationBell v-if="user" />
       <button
         class="rounded-lg border border-app px-2 py-1.5 text-sm leading-none text-muted hover:bg-surface-2 hover:text-app"
-        :aria-label="theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+        :aria-label="theme === 'dark' ? t('ui.theme.light') : t('ui.theme.dark')"
         @click="toggleTheme"
       >
         {{ theme === 'dark' ? '☀️' : '🌙' }}
