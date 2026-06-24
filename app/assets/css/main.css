@@ -53,6 +53,25 @@ html.dark {
   --text-muted: #a1a1aa;  /* zinc-400 */
 }
 
+/* ---- Portal accent — login + dealer-facing screens emphasize Mitsubishi
+   red (#e60012). Tailwind v4 emits brand utilities as var(--color-brand-*),
+   so re-mapping the ramp under this class re-skins every brand-* utility in
+   the subtree to red. Operation screens (no class) keep the JWD blue ramp.
+   Toggled on <html> per-route by plugins/brand-theme.client.ts. ---- */
+html.theme-portal {
+  --color-brand-50: #fff1f1;
+  --color-brand-100: #ffe1e2;
+  --color-brand-200: #ffc9cb;
+  --color-brand-300: #ffa3a7;
+  --color-brand-400: #ff6b73;
+  --color-brand-500: #f83a45;
+  --color-brand-600: #e60012; /* Mitsubishi red */
+  --color-brand-700: #c10010;
+  --color-brand-800: #9f0512;
+  --color-brand-900: #840a16;
+  --color-brand-950: #4a050b; /* deep red — anchors the login hero gradient */
+}
+
 html, body, #__nuxt {
   height: 100%;
 }

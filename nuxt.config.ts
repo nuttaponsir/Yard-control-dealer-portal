@@ -31,7 +31,7 @@ export default defineNuxtConfig({
       script: [
         {
           innerHTML:
-            ";(function(){try{if(localStorage.getItem('jwd-theme')==='dark')document.documentElement.classList.add('dark');}catch(e){}})();",
+            ";(function(){try{if(localStorage.getItem('jwd-theme')==='dark')document.documentElement.classList.add('dark');var p=(location.pathname||'/').replace(/\\/+$/,'')||'/';var d=['/dashboard','/catalog','/orders','/addresses','/payments','/returns','/claims','/warranty'];if(p==='/'||p==='/auth'||d.some(function(x){return p===x||p.indexOf(x+'/')===0;}))document.documentElement.classList.add('theme-portal');}catch(e){}})();",
           tagPosition: 'head',
         },
       ],
