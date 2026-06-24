@@ -112,7 +112,7 @@ async function fileClaim() {
 }
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })
+  return new Date(iso).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 </script>
 

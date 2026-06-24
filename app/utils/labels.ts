@@ -111,7 +111,7 @@ export function statusTone(status: string): string {
   return STATUS_TONE[status] ?? 'bg-zinc-700/40 text-zinc-300'
 }
 
-/** Format an integer THB amount as e.g. "฿1,250,000". */
+/** Format a THB amount with 2 decimals, e.g. "฿1,250,000.00". */
 export function thb(amount: number): string {
-  return '฿' + amount.toLocaleString('th-TH')
+  return '฿' + amount.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
