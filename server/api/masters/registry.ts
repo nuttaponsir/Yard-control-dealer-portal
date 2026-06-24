@@ -107,6 +107,35 @@ const dealersCreate = z.object({
   creditLimit: z.number().int().min(0),
 })
 
+// Phase M — parts master incl. model compatibility (empty array = universal).
+const partsCreate = z.object({
+  sku: code,
+  name,
+  category: z.string().trim().min(1).max(60),
+  oem: z.boolean().default(true),
+  warrantyMonths: z.number().int().min(0).default(0),
+  leadTimeDays: z.number().int().min(0).default(0),
+  price: z.number().int().min(0),
+  compatibleModels: z.array(z.string().trim().min(1)).default([]),
+  supplierId: z.number().int().positive().nullish(),
+})
+
+const claimResolutionsCreate = z.object({
+  code,
+  nameTh: name,
+  refundable: z.boolean().default(false),
+  active: z.boolean().default(true),
+})
+
+const autologicDevicesCreate = z.object({
+  sku: code,
+  name,
+  description: z.string().trim().max(500).nullish(),
+  price: z.number().int().min(0).default(0),
+  compatibleModels: z.array(z.string().trim().min(1)).default([]),
+  active: z.boolean().default(true),
+})
+
 export const MASTERS: Record<string, MasterDef> = {
   // ---- operational masters (full CRUD) ----
   suppliers: {
@@ -204,8 +233,30 @@ export const MASTERS: Record<string, MasterDef> = {
     table: schema.vehicleModels,
     create: vehicleModelsCreate,
     update: vehicleModelsCreate.partial(),
-    editable: false,
+    editable: true,
     sortKey: 'name',
+  },
+  // ---- Phase M masters ----
+  parts: {
+    table: schema.parts,
+    create: partsCreate,
+    update: partsCreate.partial(),
+    editable: true,
+    sortKey: 'sku',
+  },
+  claimResolutions: {
+    table: schema.claimResolutions,
+    create: claimResolutionsCreate,
+    update: claimResolutionsCreate.partial(),
+    editable: true,
+    sortKey: 'code',
+  },
+  autologicDevices: {
+    table: schema.autologicDevices,
+    create: autologicDevicesCreate,
+    update: autologicDevicesCreate.partial(),
+    editable: true,
+    sortKey: 'sku',
   },
 }
 

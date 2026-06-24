@@ -50,6 +50,10 @@ export async function startServer(): Promise<string> {
   const warehousePatch = (await import('../../server/api/warehouse/[id].patch')).default
   const claimsGet = (await import('../../server/api/claims/index.get')).default
   const claimsPost = (await import('../../server/api/claims/index.post')).default
+  const claimPatch = (await import('../../server/api/claims/[id].patch')).default
+  // Phase M — claim resolutions master + Autologic devices
+  const claimResolutionsGet = (await import('../../server/api/claim-resolutions.get')).default
+  const autologicDevicesGet = (await import('../../server/api/autologic-devices/index.get')).default
   const dealers = (await import('../../server/api/dealers/index.get')).default
   const returnsGet = (await import('../../server/api/returns/index.get')).default
   const returnsPost = (await import('../../server/api/returns/index.post')).default
@@ -142,6 +146,9 @@ export async function startServer(): Promise<string> {
   router.patch('/api/warehouse/:id', eventHandler(warehousePatch))
   router.get('/api/claims', eventHandler(claimsGet))
   router.post('/api/claims', eventHandler(claimsPost))
+  router.patch('/api/claims/:id', eventHandler(claimPatch))
+  router.get('/api/claim-resolutions', eventHandler(claimResolutionsGet))
+  router.get('/api/autologic-devices', eventHandler(autologicDevicesGet))
   router.get('/api/dealers', eventHandler(dealers))
   router.get('/api/returns', eventHandler(returnsGet))
   router.post('/api/returns', eventHandler(returnsPost))

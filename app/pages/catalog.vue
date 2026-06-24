@@ -2,7 +2,7 @@
 // /catalog — Dev2 owns. VIN-gated parts catalog + cart sidebar + checkout.
 import { computed, ref } from 'vue'
 import { thb } from '~/utils/labels'
-import type { Vin } from '~/types'
+import type { Vin, AutologicDevice } from '~/types'
 import type { CatalogPart } from '~/../server/api/parts/index.get'
 
 const { t } = useI18n()
@@ -120,6 +120,18 @@ const { data, pending } = await useFetch<{ parts: CatalogPart[] }>('/api/parts',
 })
 const parts = computed(() => data.value?.parts ?? [])
 
+// ---- Autologic devices for the scanned vehicle's model --------------------
+// On scan we resolve the model and show which Autologic packages fit it,
+// flagging the one already installed (deviceRow.packageName).
+const scannedModel = computed(() => deviceRow.value?.model ?? vehicleModel.value ?? null)
+const { data: devData } = useFetch<{ devices: AutologicDevice[] }>('/api/autologic-devices', {
+  query: { model: scannedModel },
+  watch: [scannedModel],
+  default: () => ({ devices: [] }),
+})
+const autologicDevices = computed(() => devData.value?.devices ?? [])
+const installedPackage = computed(() => deviceRow.value?.packageName ?? null)
+
 function stockAt(part: CatalogPart, warehouse: string): number {
   return part.stock.find((s) => s.warehouse === warehouse)?.qtyOnHand ?? 0
 }
@@ -202,6 +214,33 @@ async function checkout() {
 
       <!-- unknown VIN -->
       <p v-else-if="notFound" class="mt-3 text-sm text-muted">❓ {{ t('catalog.scan.notFound') }}</p>
+    </AppCard>
+
+    <!-- Autologic devices available for the scanned model -->
+    <AppCard
+      v-if="deviceRow && scannedModel"
+      :title="t('catalog.autologic.title')"
+      :subtitle="`${t('catalog.autologic.forModel')} ${scannedModel}`"
+    >
+      <EmptyState v-if="!autologicDevices.length" icon="📡" :title="t('catalog.autologic.empty')" />
+      <ul v-else class="grid gap-3 sm:grid-cols-2">
+        <li v-for="d in autologicDevices" :key="d.id" class="rounded-xl border border-app bg-surface p-3">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <p class="font-semibold text-app">{{ d.name }}</p>
+              <p class="code text-xs text-muted">{{ d.sku }}</p>
+            </div>
+            <span
+              v-if="installedPackage && installedPackage === d.name"
+              class="shrink-0 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+            >
+              ✓ {{ t('catalog.autologic.installed') }}
+            </span>
+          </div>
+          <p v-if="d.description" class="mt-1 text-xs text-muted">{{ d.description }}</p>
+          <p class="mt-2 text-sm font-bold text-app">{{ thb(d.price) }}</p>
+        </li>
+      </ul>
     </AppCard>
 
     <!-- nothing scanned yet → prompt -->

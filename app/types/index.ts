@@ -138,12 +138,35 @@ export interface Claim {
   id: number
   claimNumber: string
   dealerId: number | null
+  orderId: number | null
   vin: string
   partSku: string
   reason: string
   status: ClaimStatus
   amount: number
+  resolution: string | null
+  decidedBy: number | null
+  decidedAt: string | null
+  returnId: number | null
   createdAt: string
+}
+
+export interface ClaimResolution {
+  id: number
+  code: string // 'refund' | 'replace' | 'repair' | 'reject'
+  nameTh: string
+  refundable: boolean
+  active: boolean
+}
+
+export interface AutologicDevice {
+  id: number
+  sku: string
+  name: string
+  description: string | null
+  price: number
+  compatibleModels: string[]
+  active: boolean
 }
 
 export interface Return {

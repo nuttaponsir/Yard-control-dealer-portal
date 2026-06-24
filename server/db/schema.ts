@@ -166,11 +166,22 @@ export const claims = pgTable('claims', {
   // pre-existing seed rows backfill to NULL. owner/sales are scoped to their own
   // dealerId on read; null-dealer claims are visible to admin/warehouse only.
   dealerId: integer('dealer_id').references(() => dealers.id),
+  // Phase M — order the claim is filed against (bound at creation: scan VIN →
+  // pick the delivered order/part). Nullable for legacy/seed rows. Lets a
+  // 'refund' resolution spawn an RMA against this exact order.
+  orderId: integer('order_id').references(() => orders.id),
   vin: text('vin').notNull(),
   partSku: text('part_sku').notNull(),
   reason: text('reason').notNull(),
   status: text('status').notNull(), // 'submitted'|'reviewing'|'rejected'|'approved'
   amount: integer('amount').notNull().default(0),
+  // Phase M — resolution decision. `resolution` is a claim_resolutions.code
+  // ('refund'|'replace'|'repair'|'reject'); null until decided. decidedBy/At
+  // stamp who closed it. returnId links the RMA auto-created on a refund.
+  resolution: text('resolution'),
+  decidedBy: integer('decided_by').references(() => users.id, { onDelete: 'set null' }),
+  decidedAt: text('decided_at'),
+  returnId: integer('return_id').references((): any => returns.id),
   createdAt: text('created_at').notNull(),
 })
 
@@ -286,6 +297,32 @@ export const claimReasons = pgTable('claim_reasons', {
   id: serial('id').primaryKey(),
   code: text('code').notNull().unique(),
   nameTh: text('name_th').notNull(),
+})
+
+// ---- claim resolutions (Phase M) -------------------------------------------
+// Master of how a claim is closed: refund | replace | repair | reject. `code`
+// is what claims.resolution stores; `refundable` marks the codes that should
+// offer/auto-create an RMA (refund). Editable in /masters.
+export const claimResolutions = pgTable('claim_resolutions', {
+  id: serial('id').primaryKey(),
+  code: text('code').notNull().unique(), // 'refund' | 'replace' | 'repair' | 'reject'
+  nameTh: text('name_th').notNull(),
+  refundable: boolean('refundable').notNull().default(false),
+  active: boolean('active').notNull().default(true),
+})
+
+// ---- Autologic devices (Phase M) -------------------------------------------
+// Master of telematics packages/devices Autologic offers, with per-model
+// compatibility (empty compatibleModels = fits all models). Drives the
+// "available devices for this model" panel shown on VIN scan in the catalog.
+export const autologicDevices = pgTable('autologic_devices', {
+  id: serial('id').primaryKey(),
+  sku: text('sku').notNull().unique(), // 'ALG-FTP'
+  name: text('name').notNull(), // 'Fleet Tracker Pro'
+  description: text('description'),
+  price: integer('price').notNull().default(0), // THB
+  compatibleModels: text('compatible_models').array().notNull().default([]),
+  active: boolean('active').notNull().default(true),
 })
 
 // ---- provinces (M12) -------------------------------------------------------

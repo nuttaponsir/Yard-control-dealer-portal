@@ -15,7 +15,7 @@ if (import.meta.client && !can(['admin'])) {
 }
 
 // ---- field definitions (drive both the table columns and the form) --------
-type FieldType = 'text' | 'number' | 'boolean'
+type FieldType = 'text' | 'number' | 'boolean' | 'tags'
 interface FieldDef {
   key: string
   labelKey: string
@@ -137,9 +137,48 @@ const TABS: MasterTab[] = [
   {
     entity: 'vehicleModels',
     labelKey: 'masters.tab.vehicleModels',
-    editable: false,
+    editable: true,
     fields: [
       { key: 'name', labelKey: 'masters.field.name', type: 'text' },
+      { key: 'active', labelKey: 'masters.field.active', type: 'boolean' },
+    ],
+  },
+  {
+    entity: 'parts',
+    labelKey: 'masters.tab.parts',
+    editable: true,
+    fields: [
+      { key: 'sku', labelKey: 'masters.field.code', type: 'text' },
+      { key: 'name', labelKey: 'masters.field.name', type: 'text' },
+      { key: 'category', labelKey: 'masters.field.category', type: 'text' },
+      { key: 'price', labelKey: 'masters.field.price', type: 'number' },
+      { key: 'warrantyMonths', labelKey: 'masters.field.warrantyMonths', type: 'number' },
+      { key: 'leadTimeDays', labelKey: 'masters.field.leadTimeDays', type: 'number' },
+      { key: 'oem', labelKey: 'masters.field.oem', type: 'boolean' },
+      { key: 'compatibleModels', labelKey: 'masters.field.compatibleModels', type: 'tags' },
+    ],
+  },
+  {
+    entity: 'autologicDevices',
+    labelKey: 'masters.tab.autologicDevices',
+    editable: true,
+    fields: [
+      { key: 'sku', labelKey: 'masters.field.code', type: 'text' },
+      { key: 'name', labelKey: 'masters.field.name', type: 'text' },
+      { key: 'description', labelKey: 'masters.field.description', type: 'text', optional: true },
+      { key: 'price', labelKey: 'masters.field.price', type: 'number' },
+      { key: 'compatibleModels', labelKey: 'masters.field.compatibleModels', type: 'tags' },
+      { key: 'active', labelKey: 'masters.field.active', type: 'boolean' },
+    ],
+  },
+  {
+    entity: 'claimResolutions',
+    labelKey: 'masters.tab.claimResolutions',
+    editable: true,
+    fields: [
+      { key: 'code', labelKey: 'masters.field.code', type: 'text' },
+      { key: 'nameTh', labelKey: 'masters.field.nameTh', type: 'text' },
+      { key: 'refundable', labelKey: 'masters.field.refundable', type: 'boolean' },
       { key: 'active', labelKey: 'masters.field.active', type: 'boolean' },
     ],
   },
@@ -197,6 +236,7 @@ function blankForm(): Record<string, unknown> {
   const f: Record<string, unknown> = {}
   for (const field of activeTab.value.fields) {
     f[field.key] = field.type === 'boolean' ? true : field.type === 'number' ? 0 : ''
+    if (field.type === 'tags') f[field.key] = ''
   }
   return f
 }
@@ -212,7 +252,11 @@ function openEdit(row: Row) {
   const f: Record<string, unknown> = {}
   for (const field of activeTab.value.fields) {
     const v = row[field.key]
-    f[field.key] = field.type === 'boolean' ? Boolean(v) : (v ?? (field.type === 'number' ? 0 : ''))
+    if (field.type === 'tags') {
+      f[field.key] = Array.isArray(v) ? (v as string[]).join(', ') : ''
+    } else {
+      f[field.key] = field.type === 'boolean' ? Boolean(v) : (v ?? (field.type === 'number' ? 0 : ''))
+    }
   }
   form.value = f
   showForm.value = true
@@ -229,6 +273,13 @@ function buildPayload(): Record<string, unknown> {
     let v = form.value[field.key]
     if (field.type === 'number') v = Number(v)
     if (field.type === 'text' && typeof v === 'string') v = v.trim()
+    if (field.type === 'tags') {
+      // comma-separated → trimmed string array (empty = universal/none)
+      payload[field.key] = typeof v === 'string'
+        ? v.split(',').map((s) => s.trim()).filter(Boolean)
+        : Array.isArray(v) ? v : []
+      continue
+    }
     if (field.optional && (v === '' || v == null)) {
       payload[field.key] = null
       continue
@@ -280,6 +331,10 @@ async function removeRow(row: Row) {
 function cellDisplay(row: Row, field: FieldDef): string {
   const v = row[field.key]
   if (field.type === 'boolean') return v ? '✓' : '—'
+  if (field.type === 'tags') {
+    const arr = Array.isArray(v) ? (v as string[]) : []
+    return arr.length ? arr.join(', ') : t('masters.tags.universal')
+  }
   if (v == null || v === '') return '—'
   return String(v)
 }
@@ -409,8 +464,17 @@ const referenceTabs = computed(() => TABS.filter((tabb) => !tabb.editable))
             </label>
             <label v-if="field.type === 'boolean'" class="flex items-center gap-2 text-sm text-app">
               <input v-model="form[field.key]" type="checkbox" class="h-4 w-4" >
-              {{ t('masters.field.active') }}
+              {{ t(field.labelKey) }}
             </label>
+            <template v-else-if="field.type === 'tags'">
+              <input
+                v-model="form[field.key]"
+                type="text"
+                :placeholder="t('masters.tags.placeholder')"
+                class="w-full rounded-lg border border-app bg-surface-2 px-3 py-1.5 text-sm text-app placeholder:text-muted focus:border-brand-600 focus:outline-none"
+              >
+              <p class="mt-1 text-[11px] text-muted">{{ t('masters.tags.hint') }}</p>
+            </template>
             <input
               v-else
               v-model="form[field.key]"

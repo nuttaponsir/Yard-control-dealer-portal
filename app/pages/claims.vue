@@ -1,10 +1,13 @@
 <script setup lang="ts">
 // /claims — Dev3 owns. Left: scan VIN → purchase history → file claim.
 //           Right: recent claims list with status badges.
+import { reactive } from 'vue'
 import { statusLabel, thb } from '~/utils/labels'
-import type { Claim } from '~/types'
+import type { Claim, ClaimResolution } from '~/types'
 
 const { t } = useI18n()
+const { role } = useAuth()
+const canManage = computed(() => role.value === 'admin' || role.value === 'warehouse')
 
 usePageTitle().set(t('page.claims.title'), t('claims.subtitle'))
 
@@ -25,6 +28,40 @@ type ClaimRow = Claim & { partName?: string }
 const { data: claimsData, refresh: refreshClaims } =
   await useFetch<{ claims: ClaimRow[] }>('/api/claims')
 const claims = computed(() => claimsData.value?.claims ?? [])
+
+// ---- claim management (admin/warehouse): status + resolution ---------------
+const { data: resData } = useFetch<{ resolutions: ClaimResolution[] }>('/api/claim-resolutions', {
+  default: () => ({ resolutions: [] }),
+})
+const resolutions = computed(() => resData.value?.resolutions ?? [])
+const resolutionLabel = (code: string | null) =>
+  code ? (resolutions.value.find((r) => r.code === code)?.nameTh ?? code) : null
+const CLAIM_STATUSES = ['submitted', 'reviewing', 'approved', 'rejected'] as const
+
+// per-card edit drafts (id → {status, resolution}); presence = panel open
+const draft = reactive<Record<number, { status: string; resolution: string }>>({})
+const savingId = ref<number | null>(null)
+function startEdit(c: ClaimRow) {
+  draft[c.id] = { status: c.status, resolution: c.resolution ?? '' }
+}
+function cancelEdit(id: number) {
+  delete draft[id]
+}
+async function saveClaim(c: ClaimRow) {
+  const d = draft[c.id]
+  if (!d) return
+  savingId.value = c.id
+  try {
+    await $fetch(`/api/claims/${c.id}`, {
+      method: 'PATCH',
+      body: { status: d.status, resolution: d.resolution || null },
+    })
+    delete draft[c.id]
+    await refreshClaims()
+  } finally {
+    savingId.value = null
+  }
+}
 
 // ---- VIN scan + purchase history ------------------------------------------
 const vinInput = ref('')
@@ -59,7 +96,12 @@ async function fileClaim() {
   try {
     await $fetch('/api/claims', {
       method: 'POST',
-      body: { vin: scannedVin.value, partSku: selected.value.sku, reason: reason.value.trim() },
+      body: {
+        vin: scannedVin.value,
+        partSku: selected.value.sku,
+        reason: reason.value.trim(),
+        orderId: selected.value.orderId, // bind the claim to the ordered item
+      },
     })
     reason.value = ''
     selected.value = null
@@ -164,6 +206,65 @@ function fmtDate(iso: string) {
           <div class="mt-2 flex items-center justify-between text-xs">
             <span class="text-muted">{{ fmtDate(c.createdAt) }}</span>
             <span class="font-semibold text-app">{{ thb(c.amount) }}</span>
+          </div>
+
+          <!-- resolution outcome + linked RMA -->
+          <div v-if="c.resolution || c.returnId" class="mt-2 flex flex-wrap items-center gap-2 text-xs">
+            <span
+              v-if="c.resolution"
+              class="rounded-md bg-surface-2 px-2 py-0.5 font-semibold text-app"
+            >
+              {{ t('claims.manage.resolution') }}: {{ resolutionLabel(c.resolution) }}
+            </span>
+            <NuxtLink v-if="c.returnId" to="/returns" class="font-semibold text-brand-700 hover:underline dark:text-brand-300">
+              {{ t('claims.manage.viewRma') }} →
+            </NuxtLink>
+          </div>
+
+          <!-- manage (admin/warehouse) -->
+          <div v-if="canManage" class="mt-3 border-t border-app pt-3">
+            <AppButton v-if="!draft[c.id]" size="sm" variant="outline" @click="startEdit(c)">
+              {{ t('claims.manage.button') }}
+            </AppButton>
+            <div v-else class="space-y-2">
+              <div class="grid gap-2 sm:grid-cols-2">
+                <label class="block">
+                  <span class="text-xs text-muted">{{ t('claims.manage.status') }}</span>
+                  <select
+                    v-model="draft[c.id].status"
+                    class="mt-1 w-full rounded-lg border border-app bg-app px-2 py-1.5 text-sm text-app outline-none focus:border-brand-600"
+                  >
+                    <option v-for="s in CLAIM_STATUSES" :key="s" :value="s">{{ statusLabel(s) }}</option>
+                  </select>
+                </label>
+                <label class="block">
+                  <span class="text-xs text-muted">{{ t('claims.manage.resolution') }}</span>
+                  <select
+                    v-model="draft[c.id].resolution"
+                    class="mt-1 w-full rounded-lg border border-app bg-app px-2 py-1.5 text-sm text-app outline-none focus:border-brand-600"
+                  >
+                    <option value="">{{ t('claims.manage.noResolution') }}</option>
+                    <option v-for="r in resolutions" :key="r.code" :value="r.code">
+                      {{ r.nameTh }}{{ r.refundable ? ` (${t('claims.manage.refundHint')})` : '' }}
+                    </option>
+                  </select>
+                </label>
+              </div>
+              <p
+                v-if="resolutions.find((r) => r.code === draft[c.id].resolution)?.refundable"
+                class="text-xs text-amber-600 dark:text-amber-400"
+              >
+                ⚠ {{ t('claims.manage.refundNote') }}
+              </p>
+              <div class="flex gap-2">
+                <AppButton size="sm" :disabled="savingId === c.id" @click="saveClaim(c)">
+                  {{ t('action.save') }}
+                </AppButton>
+                <AppButton size="sm" variant="outline" @click="cancelEdit(c.id)">
+                  {{ t('action.cancel') }}
+                </AppButton>
+              </div>
+            </div>
           </div>
         </article>
       </div>

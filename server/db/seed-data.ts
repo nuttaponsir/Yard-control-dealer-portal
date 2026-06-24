@@ -41,7 +41,8 @@ export async function seedDatabase(): Promise<{
     ${schema.storageLocations}, ${schema.stockMovements},
     ${schema.pickTasks}, ${schema.pickTaskItems},
     ${schema.telematicsEvents}, ${schema.purchaseOrders}, ${schema.purchaseOrderItems},
-    ${schema.stockTransfers}, ${schema.cycleCounts}, ${schema.warranties}
+    ${schema.stockTransfers}, ${schema.cycleCounts}, ${schema.warranties},
+    ${schema.claimResolutions}, ${schema.autologicDevices}
     RESTART IDENTITY CASCADE`)
 
   // ---- Phase B Wave 1 master tables (seed before dependents) ---------------
@@ -110,6 +111,25 @@ export async function seedDatabase(): Promise<{
     { code: 'install_error', nameTh: 'ติดตั้งผิดพลาด' },
     { code: 'wrong_model', nameTh: 'ไม่ตรงรุ่น' },
     { code: 'other', nameTh: 'อื่นๆ' },
+  ])
+
+  // claim resolutions (Phase M) — how a claim is closed; refundable codes
+  // offer/auto-create an RMA against the claim's order.
+  await db.insert(schema.claimResolutions).values([
+    { code: 'refund', nameTh: 'คืนเงิน', refundable: true },
+    { code: 'replace', nameTh: 'เปลี่ยนของ', refundable: false },
+    { code: 'repair', nameTh: 'ซ่อม', refundable: false },
+    { code: 'reject', nameTh: 'ปฏิเสธ', refundable: false },
+  ])
+
+  // Autologic devices (Phase M) — telematics packages with per-model fit
+  // (empty compatibleModels = fits all models). Models: Triton, Pajero Sport,
+  // Outlander PHEV, Attrage.
+  await db.insert(schema.autologicDevices).values([
+    { sku: 'ALG-FTP', name: 'Fleet Tracker Pro', description: 'GPS + เซ็นเซอร์เครื่องยนต์ครบชุด', price: 18900, compatibleModels: ['Triton', 'Pajero Sport'] },
+    { sku: 'ALG-PT', name: 'Premium Telematics', description: 'วิเคราะห์การขับขี่ + แจ้งเตือนเรียลไทม์', price: 24500, compatibleModels: ['Pajero Sport', 'Outlander PHEV'] },
+    { sku: 'ALG-EV', name: 'EV Telematics', description: 'มอนิเตอร์แบตเตอรี่ + ระยะวิ่ง EV', price: 21000, compatibleModels: ['Outlander PHEV'] },
+    { sku: 'ALG-BASIC', name: 'Basic Tracker', description: 'ติดตามตำแหน่งพื้นฐาน', price: 9900, compatibleModels: [] as string[] },
   ])
 
   // provinces (M12) — distinct dealer provinces, each tagged with a region
