@@ -7,9 +7,14 @@ import type { DealerAddress, AddressKind } from '~/types'
 const { t } = useI18n()
 const { can, user } = useAuth()
 
-usePageTitle().set(t('page.addresses.title'), t('page.addresses.subtitle'))
-
 const isAdmin = computed(() => can(['admin']))
+
+// Admin manages every dealer's address book (reached from masters → dealers);
+// owner/sales see it framed as their own dealer profile ("ดีลเลอร์ของฉัน").
+usePageTitle().set(
+  isAdmin.value ? t('page.addresses.title') : t('page.myDealer.title'),
+  isAdmin.value ? t('page.addresses.subtitle') : t('page.myDealer.subtitle'),
+)
 
 // ---- admin dealer picker ---------------------------------------------------
 interface DealerLite {

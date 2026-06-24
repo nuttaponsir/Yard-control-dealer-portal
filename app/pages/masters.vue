@@ -436,6 +436,9 @@ const referenceTabs = computed(() => TABS.filter((tabb) => !tabb.editable))
 
         <template #cell-_actions="{ row }">
           <div class="flex gap-2">
+            <NuxtLink v-if="activeTab.entity === 'dealers'" :to="`/addresses?dealerId=${row.id}`">
+              <AppButton size="sm" variant="outline">{{ t('masters.action.addresses') }}</AppButton>
+            </NuxtLink>
             <AppButton size="sm" variant="outline" @click="openEdit(row as Row)">
               {{ t('masters.action.edit') }}
             </AppButton>

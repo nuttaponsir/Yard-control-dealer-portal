@@ -25,11 +25,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   if (!user.value) return navigateTo('/auth')
 
-  // Role-gate routes declared in the nav.
-  for (const item of useNav()) {
-    const match = to.path === item.to || to.path.startsWith(item.to + '/')
-    if (match && item.roles && !can(item.roles)) {
-      return navigateTo('/dashboard')
-    }
+  // Role-gate routes declared in the nav. A path may be declared by more than
+  // one item (e.g. /addresses is exposed to owner/sales and, separately, to
+  // admin): allow when ANY matching item permits the role; redirect only if the
+  // path is declared and no matching item allows this role.
+  const matches = useNav().filter(
+    (item) => to.path === item.to || to.path.startsWith(item.to + '/'),
+  )
+  if (matches.length && !matches.some((item) => !item.roles || can(item.roles))) {
+    return navigateTo('/dashboard')
   }
 })

@@ -17,7 +17,7 @@ onMounted(loadBrand)
 
 // Only the items this role can see; a group header renders when the group
 // changes from the previous visible item.
-const visibleItems = computed(() => items.filter((i) => can(i.roles)))
+const visibleItems = computed(() => items.filter((i) => !i.hidden && can(i.roles)))
 function showGroupHeader(idx: number): string | null {
   const g = visibleItems.value[idx]?.group
   if (!g) return null

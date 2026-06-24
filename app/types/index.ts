@@ -223,6 +223,9 @@ export interface NavItem {
   badge?: string
   /** Optional sidebar section header this item sits under (i18n key). */
   group?: string
+  /** Reachable (role-gated) but not shown in the sidebar — e.g. opened from
+   *  another page. Middleware still enforces `roles`. */
+  hidden?: boolean
 }
 
 // ---- client cart line (useCart) --------------------------------------------
