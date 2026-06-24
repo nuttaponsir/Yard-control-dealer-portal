@@ -25,7 +25,9 @@ interface DashboardData {
   wms: null | WmsSummary
 }
 
-const { data } = await useFetch<DashboardData>('/api/dashboard')
+// Lazy + client-only: the app shell paints instantly with a skeleton instead
+// of blocking SSR on the (remote-DB) aggregate queries; data fills in after.
+const { data, status } = useFetch<DashboardData>('/api/dashboard', { lazy: true, server: false })
 
 const kpis = computed(() => data.value?.kpis ?? { totalOrders: 0, pending: 0, shipped: 0, delivered: 0 })
 const dailyOrders = computed(() => data.value?.dailyOrders ?? [])
@@ -64,6 +66,8 @@ const lowStockColumns = computed(() => [
 
 <template>
   <div class="space-y-5">
+    <AppSkeleton v-if="status !== 'success'" :cards="4" :rows="5" />
+    <template v-else>
     <!-- KPI cards -->
     <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
       <StatCard :label="t('dashboard.kpi.totalOrders')" :value="kpis.totalOrders" tone="brand" />
@@ -167,5 +171,6 @@ const lowStockColumns = computed(() => [
         </template>
       </DataTable>
     </AppCard>
+    </template>
   </div>
 </template>

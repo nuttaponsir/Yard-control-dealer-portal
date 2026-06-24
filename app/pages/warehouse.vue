@@ -23,7 +23,10 @@ interface Column {
   orders: FulfillmentCard[]
 }
 
-const { data, refresh, pending } = await useFetch<{ columns: Column[] }>('/api/warehouse')
+const { data, refresh, pending, status } = useFetch<{ columns: Column[] }>('/api/warehouse', {
+  lazy: true,
+  server: false,
+})
 const columns = computed(() => data.value?.columns ?? [])
 
 // next status + its action label per column (none for the final 'delivered')
@@ -82,6 +85,8 @@ const packShip = computed(() => allCards.value.filter((c) => c.status === 'packi
 
 <template>
   <div class="space-y-5">
+    <AppSkeleton v-if="status !== 'success' && !columns.length" :rows="6" />
+    <template v-else>
     <!-- tab bar -->
     <div class="flex flex-wrap items-center gap-1.5 rounded-xl border border-app bg-surface p-1.5">
       <button
@@ -218,5 +223,6 @@ const packShip = computed(() => allCards.value.filter((c) => c.status === 'packi
     </AppCard>
 
     <p v-if="pending" class="text-center text-xs text-muted">{{ t('common.loadingEllipsis') }}</p>
+    </template>
   </div>
 </template>

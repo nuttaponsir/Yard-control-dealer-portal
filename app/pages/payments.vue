@@ -19,8 +19,10 @@ const isAdmin = computed(() => role.value === 'admin')
 const canRecord = computed(() => role.value === 'admin' || role.value === 'owner')
 
 // ---- payments list ---------------------------------------------------------
-const { data: listData, refresh } = await useFetch<{ payments: PaymentRow[] }>('/api/payments', {
+const { data: listData, refresh, status } = useFetch<{ payments: PaymentRow[] }>('/api/payments', {
   default: () => ({ payments: [] }),
+  lazy: true,
+  server: false,
 })
 const payments = computed(() => listData.value?.payments ?? [])
 
@@ -45,9 +47,11 @@ function methodLabel(m: string): string {
 }
 
 // ---- dealers (admin chooses; owner is pinned to its own) -------------------
-const { data: dealersData } = await useFetch<{ dealers: Dealer[] }>('/api/dealers', {
+const { data: dealersData } = useFetch<{ dealers: Dealer[] }>('/api/dealers', {
   default: () => ({ dealers: [] }),
   immediate: isAdmin.value,
+  lazy: true,
+  server: false,
 })
 const dealers = computed(() => dealersData.value?.dealers ?? [])
 
@@ -65,8 +69,10 @@ const formError = ref<string | null>(null)
 const METHODS: PaymentMethod[] = ['transfer', 'cash', 'cheque', 'card']
 
 // Outstanding orders for the chosen dealer (to optionally apply against).
-const { data: ordersData } = await useFetch<{ orders: OrderRow[] }>('/api/orders', {
+const { data: ordersData } = useFetch<{ orders: OrderRow[] }>('/api/orders', {
   default: () => ({ orders: [] }),
+  lazy: true,
+  server: false,
 })
 const outstandingOrders = computed(() => {
   const did = formDealerId.value
@@ -203,7 +209,8 @@ async function submit() {
       <template #actions>
         <DataPorter :export-url="'/api/payments/export'" :export-filename="'payments.xlsx'" />
       </template>
-      <EmptyState v-if="!payments.length" icon="💰" :title="t('payments.list.empty')" />
+      <AppSkeleton v-if="status !== 'success' && !payments.length" :rows="6" />
+      <EmptyState v-else-if="!payments.length" icon="💰" :title="t('payments.list.empty')" />
       <DataTable v-else :columns="columns" :rows="payments">
         <template #cell-amount="{ value }">{{ thb(value) }}</template>
         <template #cell-method="{ value }">{{ methodLabel(value) }}</template>

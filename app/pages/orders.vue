@@ -18,8 +18,10 @@ const columns = computed(() => [
   { key: 'createdAt', label: t('orders.col.date') },
 ])
 
-const { data } = await useFetch<{ orders: OrderRow[] }>('/api/orders', {
+const { data, status } = useFetch<{ orders: OrderRow[] }>('/api/orders', {
   default: () => ({ orders: [] }),
+  lazy: true,
+  server: false,
 })
 const rows = computed(() => data.value?.orders ?? [])
 
@@ -33,7 +35,8 @@ function thaiDate(iso: string): string {
     <template #actions>
       <DataPorter :export-url="'/api/orders/export'" :export-filename="'orders.xlsx'" />
     </template>
-    <DataTable :columns="columns" :rows="rows">
+    <AppSkeleton v-if="status !== 'success'" :rows="6" />
+    <DataTable v-else :columns="columns" :rows="rows">
       <template #cell-status="{ value }">
         <StatusBadge :status="value" />
       </template>
