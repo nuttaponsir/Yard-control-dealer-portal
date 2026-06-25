@@ -315,14 +315,35 @@ export const claimResolutions = pgTable('claim_resolutions', {
 // Master of telematics packages/devices Autologic offers, with per-model
 // compatibility (empty compatibleModels = fits all models). Drives the
 // "available devices for this model" panel shown on VIN scan in the catalog.
+// Accessory catalog (body kits / spare-part add-ons: skirts, bumpers, spoilers
+// …) with per-model fit (empty compatibleModels = fits all). Table name kept as
+// 'autologic_devices' for migration continuity; conceptually these are
+// dealer-fit accessories. Drives the "accessories for this model" catalog panel.
 export const autologicDevices = pgTable('autologic_devices', {
   id: serial('id').primaryKey(),
-  sku: text('sku').notNull().unique(), // 'ALG-FTP'
-  name: text('name').notNull(), // 'Fleet Tracker Pro'
+  sku: text('sku').notNull().unique(), // 'ACC-SKF-01'
+  name: text('name').notNull(), // 'สเกิร์ตหน้า'
   description: text('description'),
   price: integer('price').notNull().default(0), // THB
   compatibleModels: text('compatible_models').array().notNull().default([]),
   active: boolean('active').notNull().default(true),
+})
+
+// Accessories actually installed on a specific vehicle (one row per install).
+// Backs the "อุปกรณ์ตกแต่ง" page: per-VIN installed list + install history. A VIN
+// with ≥1 active install is "in program" (vins.autologicInstalled gate).
+export const vinAccessories = pgTable('vin_accessories', {
+  id: serial('id').primaryKey(),
+  vin: text('vin').notNull(), // references vins.vin (text)
+  accessoryId: integer('accessory_id')
+    .notNull()
+    .references(() => autologicDevices.id),
+  installedAt: text('installed_at').notNull(), // ISO date
+  installCenter: text('install_center'),
+  warrantyMonths: integer('warranty_months').notNull().default(0),
+  note: text('note'),
+  installedBy: integer('installed_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: text('created_at').notNull(),
 })
 
 // ---- provinces (M12) -------------------------------------------------------

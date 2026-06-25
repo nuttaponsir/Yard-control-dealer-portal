@@ -159,6 +159,8 @@ export interface ClaimResolution {
   active: boolean
 }
 
+// Accessory catalog item (body kit / spare-part add-on). Stored in the
+// autologic_devices table (name kept for migration continuity).
 export interface AutologicDevice {
   id: number
   sku: string
@@ -167,6 +169,22 @@ export interface AutologicDevice {
   price: number
   compatibleModels: string[]
   active: boolean
+}
+export type Accessory = AutologicDevice
+
+// An accessory installed on a specific vehicle (one row per install).
+export interface VinAccessory {
+  id: number
+  vin: string
+  accessoryId: number
+  accessoryName?: string
+  accessorySku?: string
+  installedAt: string
+  installCenter: string | null
+  warrantyMonths: number
+  note: string | null
+  installedBy: number | null
+  createdAt: string
 }
 
 export interface Return {

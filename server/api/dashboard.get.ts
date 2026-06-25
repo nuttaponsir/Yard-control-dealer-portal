@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
   const warRowsP = isWms
     ? db.query.warranties.findMany({ columns: { status: true, expiresAt: true } })
     : Promise.resolve([])
-  const evRowsP = isWms ? db.query.telematicsEvents.findMany({ columns: { severity: true } }) : Promise.resolve([])
+  const evRowsP = isWms ? db.query.vinAccessories.findMany({ columns: { id: true } }) : Promise.resolve([])
 
   const [orderRows, lowRows, dealer, pickRows, locRows, moveRows, partRows, poRows, warRows, evRows] =
     await Promise.all([
@@ -139,7 +139,7 @@ export default defineEventHandler(async (event) => {
       expiringWarranties: warRows.filter(
         (w) => w.status === 'active' && w.expiresAt >= todayStr && w.expiresAt <= soonStr,
       ).length,
-      deviceAlerts: evRows.filter((e) => e.severity === 'warning' || e.severity === 'critical').length,
+      deviceAlerts: evRows.length, // accessories installed (network-wide)
       recentMovements: moveRows.map((m) => ({
         partSku: skuById.get(m.partId) ?? null,
         warehouse: m.warehouse,

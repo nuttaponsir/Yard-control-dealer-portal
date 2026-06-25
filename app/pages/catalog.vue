@@ -120,9 +120,9 @@ const { data, pending } = await useFetch<{ parts: CatalogPart[] }>('/api/parts',
 })
 const parts = computed(() => data.value?.parts ?? [])
 
-// ---- Autologic devices for the scanned vehicle's model --------------------
-// On scan we resolve the model and show which Autologic packages fit it,
-// flagging the one already installed (deviceRow.packageName).
+// ---- Accessories that fit the scanned vehicle's model ---------------------
+// On scan we resolve the model, show the accessories that fit it, and flag the
+// ones already installed on this VIN (from /api/vin-accessories).
 const scannedModel = computed(() => deviceRow.value?.model ?? vehicleModel.value ?? null)
 const { data: devData } = useFetch<{ devices: AutologicDevice[] }>('/api/autologic-devices', {
   query: { model: scannedModel },
@@ -130,7 +130,13 @@ const { data: devData } = useFetch<{ devices: AutologicDevice[] }>('/api/autolog
   default: () => ({ devices: [] }),
 })
 const autologicDevices = computed(() => devData.value?.devices ?? [])
-const installedPackage = computed(() => deviceRow.value?.packageName ?? null)
+
+const { data: installedData } = useFetch<{ accessories: { accessoryId: number }[] }>('/api/vin-accessories', {
+  query: { vin },
+  watch: [vin],
+  default: () => ({ accessories: [] }),
+})
+const installedAccessoryIds = computed(() => new Set((installedData.value?.accessories ?? []).map((a) => a.accessoryId)))
 
 function stockAt(part: CatalogPart, warehouse: string): number {
   return part.stock.find((s) => s.warehouse === warehouse)?.qtyOnHand ?? 0
@@ -231,7 +237,7 @@ async function checkout() {
               <p class="code text-xs text-muted">{{ d.sku }}</p>
             </div>
             <span
-              v-if="installedPackage && installedPackage === d.name"
+              v-if="installedAccessoryIds.has(d.id)"
               class="shrink-0 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
             >
               ✓ {{ t('catalog.autologic.installed') }}

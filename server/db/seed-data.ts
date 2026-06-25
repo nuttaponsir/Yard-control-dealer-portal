@@ -42,7 +42,7 @@ export async function seedDatabase(): Promise<{
     ${schema.pickTasks}, ${schema.pickTaskItems},
     ${schema.telematicsEvents}, ${schema.purchaseOrders}, ${schema.purchaseOrderItems},
     ${schema.stockTransfers}, ${schema.cycleCounts}, ${schema.warranties},
-    ${schema.claimResolutions}, ${schema.autologicDevices}
+    ${schema.claimResolutions}, ${schema.autologicDevices}, ${schema.vinAccessories}
     RESTART IDENTITY CASCADE`)
 
   // ---- Phase B Wave 1 master tables (seed before dependents) ---------------
@@ -126,10 +126,14 @@ export async function seedDatabase(): Promise<{
   // (empty compatibleModels = fits all models). Models: Triton, Pajero Sport,
   // Outlander PHEV, Attrage.
   await db.insert(schema.autologicDevices).values([
-    { sku: 'ALG-FTP', name: 'Fleet Tracker Pro', description: 'GPS + เซ็นเซอร์เครื่องยนต์ครบชุด', price: 18900, compatibleModels: ['Triton', 'Pajero Sport'] },
-    { sku: 'ALG-PT', name: 'Premium Telematics', description: 'วิเคราะห์การขับขี่ + แจ้งเตือนเรียลไทม์', price: 24500, compatibleModels: ['Pajero Sport', 'Outlander PHEV'] },
-    { sku: 'ALG-EV', name: 'EV Telematics', description: 'มอนิเตอร์แบตเตอรี่ + ระยะวิ่ง EV', price: 21000, compatibleModels: ['Outlander PHEV'] },
-    { sku: 'ALG-BASIC', name: 'Basic Tracker', description: 'ติดตามตำแหน่งพื้นฐาน', price: 9900, compatibleModels: [] as string[] },
+    { sku: 'ACC-SKF-01', name: 'สเกิร์ตหน้า', description: 'สเกิร์ตหน้า ABS งานสี', price: 6900, compatibleModels: ['Triton', 'Pajero Sport'] },
+    { sku: 'ACC-SKS-02', name: 'สเกิร์ตข้าง', description: 'สเกิร์ตข้างซ้าย-ขวา', price: 8500, compatibleModels: ['Triton', 'Pajero Sport'] },
+    { sku: 'ACC-BMP-03', name: 'กันชนหน้า', description: 'กันชนหน้าทรงสปอร์ต', price: 12500, compatibleModels: ['Triton'] },
+    { sku: 'ACC-BMP-04', name: 'กันชนหลัง', description: 'กันชนหลังพร้อมทับทิม', price: 11000, compatibleModels: ['Triton', 'Pajero Sport'] },
+    { sku: 'ACC-SPL-05', name: 'สปอยเลอร์หลัง', description: 'สปอยเลอร์หลังพร้อมไฟเบรกดวงที่ 3', price: 5400, compatibleModels: ['Pajero Sport', 'Outlander PHEV'] },
+    { sku: 'ACC-RCK-06', name: 'แร็คหลังคา', description: 'แร็คหลังคาอะลูมิเนียม รับน้ำหนัก 75 กก.', price: 7800, compatibleModels: ['Pajero Sport', 'Outlander PHEV'] },
+    { sku: 'ACC-STP-07', name: 'บันไดข้าง', description: 'บันไดข้างสเตนเลส', price: 6200, compatibleModels: ['Triton', 'Pajero Sport'] },
+    { sku: 'ACC-FLM-08', name: 'พรมปูพื้น 7 ชิ้น', description: 'พรมปูพื้นเข้ารูป กันน้ำ', price: 1900, compatibleModels: [] as string[] },
   ])
 
   // provinces (M12) — distinct dealer provinces, each tagged with a region
@@ -368,6 +372,20 @@ export async function seedDatabase(): Promise<{
       packageName: null, deviceSerial: null, installCenter: null, installDate: null,
       firmware: null, lastConnectedAt: null, status: 'not_installed',
     },
+  ])
+
+  // ---- installed accessories per VIN (the "in program" gate) --------------
+  // accessory ids by insert order: 1 สเกิร์ตหน้า · 2 สเกิร์ตข้าง · 3 กันชนหน้า ·
+  // 4 กันชนหลัง · 5 สปอยเลอร์ · 6 แร็คหลังคา · 7 บันไดข้าง · 8 พรม.
+  await db.insert(schema.vinAccessories).values([
+    { vin: 'MMTJNKB40NH000001', accessoryId: 1, installedAt: iso(220), installCenter: 'ศูนย์ตกแต่ง กรุงเทพ (รัชดา)', warrantyMonths: 12, createdAt: iso(220) },
+    { vin: 'MMTJNKB40NH000001', accessoryId: 3, installedAt: iso(220), installCenter: 'ศูนย์ตกแต่ง กรุงเทพ (รัชดา)', warrantyMonths: 12, createdAt: iso(220) },
+    { vin: 'MMTJNKB40NH000001', accessoryId: 7, installedAt: iso(120), installCenter: 'ศูนย์ตกแต่ง กรุงเทพ (รัชดา)', warrantyMonths: 6, createdAt: iso(120) },
+    { vin: 'MMBJNKS50PH000003', accessoryId: 2, installedAt: iso(150), installCenter: 'ศูนย์ตกแต่ง เชียงใหม่', warrantyMonths: 12, createdAt: iso(150) },
+    { vin: 'MMBJNKS50PH000003', accessoryId: 6, installedAt: iso(150), installCenter: 'ศูนย์ตกแต่ง เชียงใหม่', warrantyMonths: 24, createdAt: iso(150) },
+    { vin: 'MMOJNPEV2RH000006', accessoryId: 5, installedAt: iso(60), installCenter: 'ศูนย์ตกแต่ง กรุงเทพ (รัชดา)', warrantyMonths: 12, createdAt: iso(60) },
+    { vin: 'MMOJNPEV2RH000006', accessoryId: 8, installedAt: iso(60), installCenter: 'ศูนย์ตกแต่ง กรุงเทพ (รัชดา)', warrantyMonths: 6, createdAt: iso(60) },
+    { vin: 'MMTJNKB40NH000002', accessoryId: 4, installedAt: iso(200), installCenter: 'ศูนย์ตกแต่ง ขอนแก่น', warrantyMonths: 12, createdAt: iso(200) },
   ])
 
   // ---- ~40 sample orders + items (mostly DLR0001, a few others) -----------
