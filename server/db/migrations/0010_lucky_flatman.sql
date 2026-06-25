@@ -1,0 +1,1 @@
+DROP TABLE "telematics_events" CASCADE;

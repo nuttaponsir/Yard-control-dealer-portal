@@ -13,7 +13,7 @@ export function useNav(): NavItemResolved[] {
     { to: '/dashboard', labelKey: 'nav.dashboard', icon: '◧' },
     // ---- Sales & service (dealer-facing). Telematics/Autologic lives here
     // (VIN check is consolidated into it) — no longer its own 1-item group. ----
-    { to: '/telematics', labelKey: 'nav.telematics', icon: '📡', roles: ['admin', 'owner', 'sales', 'warehouse'], group: 'navGroup.sales' },
+    { to: '/accessories', labelKey: 'nav.telematics', icon: '📡', roles: ['admin', 'owner', 'sales', 'warehouse'], group: 'navGroup.sales' },
     { to: '/catalog', labelKey: 'nav.catalog', icon: '🧰', roles: ['admin', 'owner', 'sales'], group: 'navGroup.sales' },
     { to: '/orders', labelKey: 'nav.orders', icon: '📦', roles: ['admin', 'owner', 'sales', 'warehouse'], group: 'navGroup.sales' },
     { to: '/payments', labelKey: 'nav.payments', icon: '💰', roles: ['admin', 'owner', 'sales'], group: 'navGroup.sales' },

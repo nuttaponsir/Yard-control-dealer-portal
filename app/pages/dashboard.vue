@@ -111,7 +111,7 @@ const lowStockColumns = computed(() => [
         <NuxtLink to="/warranty" class="block transition hover:opacity-80">
           <StatCard :label="t('dashboard.wms.expiringWarranties')" :value="wms.expiringWarranties" tone="sky" />
         </NuxtLink>
-        <NuxtLink to="/telematics" class="block transition hover:opacity-80">
+        <NuxtLink to="/accessories" class="block transition hover:opacity-80">
           <StatCard :label="t('dashboard.wms.deviceAlerts')" :value="wms.deviceAlerts" tone="brand" />
         </NuxtLink>
       </div>

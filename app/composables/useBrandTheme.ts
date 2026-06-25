@@ -4,7 +4,7 @@
 // keep blue. Single source of truth, shared by the client theme plugin.
 const DEALER_PATHS = [
   '/dashboard',
-  '/telematics',
+  '/accessories',
   '/catalog',
   '/orders',
   '/addresses',

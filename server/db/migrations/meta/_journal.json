@@ -71,6 +71,13 @@
       "when": 1782373452527,
       "tag": "0009_cool_blonde_phantom",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1782376532214,
+      "tag": "0010_lucky_flatman",
+      "breakpoints": true
     }
   ]
 }

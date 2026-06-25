@@ -454,27 +454,6 @@ export interface Issue {
 // Phase 5 — completeness modules
 // ============================================================================
 
-// ---- Autologic telematics --------------------------------------------------
-export type TelematicsEventType =
-  | 'connect'
-  | 'disconnect'
-  | 'fault'
-  | 'firmware_update'
-  | 'geofence'
-  | 'heartbeat'
-export type TelematicsSeverity = 'info' | 'warning' | 'critical'
-
-export interface TelematicsEvent {
-  id: number
-  vin: string
-  type: TelematicsEventType
-  severity: TelematicsSeverity
-  message: string
-  detail: string | null
-  createdBy: number | null
-  createdAt: string
-}
-
 // ---- procurement -----------------------------------------------------------
 export type PurchaseOrderStatus = 'draft' | 'ordered' | 'partial' | 'received' | 'cancelled'
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// /telematics (route kept for continuity) — "อุปกรณ์ตกแต่ง / Accessories".
+// /accessories — "อุปกรณ์ตกแต่ง". Search a VIN → installed body-kit accessories
 // Search a VIN → see the vehicle's installed body-kit accessories + the
 // accessories that fit its model; admin/warehouse can record a new install
 // (which also unlocks ordering for that VIN). Plus a recent-installs feed.

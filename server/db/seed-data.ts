@@ -40,7 +40,7 @@ export async function seedDatabase(): Promise<{
     ${schema.claimReasons}, ${schema.provinces}, ${schema.appConfig},
     ${schema.storageLocations}, ${schema.stockMovements},
     ${schema.pickTasks}, ${schema.pickTaskItems},
-    ${schema.telematicsEvents}, ${schema.purchaseOrders}, ${schema.purchaseOrderItems},
+    ${schema.purchaseOrders}, ${schema.purchaseOrderItems},
     ${schema.stockTransfers}, ${schema.cycleCounts}, ${schema.warranties},
     ${schema.claimResolutions}, ${schema.autologicDevices}, ${schema.vinAccessories}
     RESTART IDENTITY CASCADE`)
@@ -576,15 +576,6 @@ export async function seedDatabase(): Promise<{
     .where(eq(schema.dealers.id, dlr1))
 
   // ---- Phase 5: completeness-module demo data ------------------------------
-  // Telematics events for the installed devices.
-  await db.insert(schema.telematicsEvents).values([
-    { vin: installedVins[0]!, type: 'connect', severity: 'info', message: 'อุปกรณ์ออนไลน์', detail: null, createdBy: wmsActorId, createdAt: iso(2) },
-    { vin: installedVins[0]!, type: 'heartbeat', severity: 'info', message: 'สัญญาณปกติ', detail: null, createdBy: wmsActorId, createdAt: iso(1) },
-    { vin: installedVins[1]!, type: 'fault', severity: 'warning', message: 'แรงดันแบตเตอรี่ต่ำ', detail: 'code=BATT_LOW', createdBy: wmsActorId, createdAt: iso(1) },
-    { vin: installedVins[2]!, type: 'firmware_update', severity: 'info', message: 'อัปเดตเฟิร์มแวร์เป็น v4.1.0', detail: 'v4.1.0', createdBy: wmsActorId, createdAt: iso(3) },
-    { vin: installedVins[1]!, type: 'geofence', severity: 'warning', message: 'ออกนอกพื้นที่ที่กำหนด', detail: null, createdBy: wmsActorId, createdAt: iso(0) },
-  ])
-
   // One ordered + one partially-received purchase order.
   const supA = insertedSuppliers[0]!.id
   const poParts = insertedParts.slice(0, 3)

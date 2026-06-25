@@ -536,20 +536,6 @@ export const issues = pgTable('issues', {
 // Warranty). All additive on top of the existing WMS + order domain.
 // ============================================================================
 
-// ---- Autologic telematics events (device activity / alert log) -------------
-// One row per device event, keyed by VIN (the device registry lives on `vins`).
-// Drives the telematics fleet view + alert feed; firmware pushes append a row.
-export const telematicsEvents = pgTable('telematics_events', {
-  id: serial('id').primaryKey(),
-  vin: text('vin').notNull(), // references vins.vin (text), not enforced as FK
-  type: text('type').notNull(), // 'connect'|'disconnect'|'fault'|'firmware_update'|'geofence'|'heartbeat'
-  severity: text('severity').notNull().default('info'), // 'info'|'warning'|'critical'
-  message: text('message').notNull(),
-  detail: text('detail'), // optional JSON blob (firmware version, fault code, …)
-  createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
-  createdAt: text('created_at').notNull(),
-})
-
 // ---- procurement: inbound purchase orders to suppliers ---------------------
 // The supply-side counterpart of sales orders. Receiving a PO line increments
 // inventory.qtyOnHand + posts a 'receipt' stock_movement (the WMS inbound seam).
