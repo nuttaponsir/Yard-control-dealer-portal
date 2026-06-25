@@ -188,52 +188,41 @@ const fld =
     </AppCard>
 
     <!-- adjust modal -->
-    <div
-      v-if="showAdjust"
-      class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
-      @click.self="closeAdjust"
-    >
-      <div class="w-full max-w-md rounded-2xl border border-app bg-surface p-5 shadow-xl">
-        <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-app">{{ t('movements.adjustTitle') }}</h2>
-          <button class="text-muted hover:text-app" @click="closeAdjust">✕</button>
+    <AppModal :open="showAdjust" :title="t('movements.adjustTitle')" @close="closeAdjust">
+      <div class="space-y-3">
+        <div>
+          <label class="mb-1 block text-xs font-medium text-muted">{{ t('movements.part') }}</label>
+          <select v-model.number="adjPartId" :class="fld">
+            <option v-for="p in parts" :key="p.id" :value="p.id">{{ p.sku }} — {{ p.name }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-muted">{{ t('movements.warehouse') }}</label>
+          <select v-if="warehouses.length" v-model="adjWarehouse" :class="fld">
+            <option v-for="w in warehouses" :key="w" :value="w">{{ w }}</option>
+          </select>
+          <input v-else v-model="adjWarehouse" type="text" :class="fld">
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-muted">{{ t('movements.adjustQty') }}</label>
+          <input v-model.number="adjQty" type="number" :class="fld">
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-muted">{{ t('movements.adjustReason') }}</label>
+          <input v-model="adjNote" type="text" :class="fld">
         </div>
 
-        <div class="space-y-3">
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted">{{ t('movements.part') }}</label>
-            <select v-model.number="adjPartId" :class="fld">
-              <option v-for="p in parts" :key="p.id" :value="p.id">{{ p.sku }} — {{ p.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted">{{ t('movements.warehouse') }}</label>
-            <select v-if="warehouses.length" v-model="adjWarehouse" :class="fld">
-              <option v-for="w in warehouses" :key="w" :value="w">{{ w }}</option>
-            </select>
-            <input v-else v-model="adjWarehouse" type="text" :class="fld">
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted">{{ t('movements.adjustQty') }}</label>
-            <input v-model.number="adjQty" type="number" :class="fld">
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted">{{ t('movements.adjustReason') }}</label>
-            <input v-model="adjNote" type="text" :class="fld">
-          </div>
-
-          <p v-if="formError" class="text-xs text-rose-400">{{ formError }}</p>
-
-          <div class="flex justify-end gap-3 pt-2">
-            <AppButton variant="outline" size="sm" :disabled="submitting" @click="closeAdjust">
-              {{ t('common.cancel') }}
-            </AppButton>
-            <AppButton size="sm" :disabled="submitting" @click="submit">
-              {{ submitting ? t('movements.posting') : t('movements.post') }}
-            </AppButton>
-          </div>
-        </div>
+        <p v-if="formError" class="text-xs text-rose-400">{{ formError }}</p>
       </div>
-    </div>
+
+      <template #footer>
+        <AppButton variant="outline" size="sm" :disabled="submitting" @click="closeAdjust">
+          {{ t('common.cancel') }}
+        </AppButton>
+        <AppButton size="sm" :disabled="submitting" @click="submit">
+          {{ submitting ? t('movements.posting') : t('movements.post') }}
+        </AppButton>
+      </template>
+    </AppModal>
   </div>
 </template>

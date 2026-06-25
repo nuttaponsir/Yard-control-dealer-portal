@@ -273,11 +273,6 @@ async function submitRequest() {
     </AppCard>
 
     <!-- success toast -->
-    <div
-      v-if="toast"
-      class="fixed bottom-6 right-6 z-50 rounded-xl border border-emerald-500/30 bg-emerald-500/15 px-4 py-3 text-sm font-semibold text-emerald-300 shadow-lg"
-    >
-      {{ toast }}
-    </div>
+    <AppToast :message="toast" />
   </div>
 </template>

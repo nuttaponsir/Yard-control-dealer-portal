@@ -79,9 +79,6 @@ function thaiDateTime(iso: string | null): string {
   })
 }
 
-const onlinePill = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
-const offlinePill = 'bg-slate-100 text-slate-600 dark:bg-slate-800/60 dark:text-slate-300'
-
 const severityDot: Record<TelematicsSeverity, string> = {
   info: 'bg-sky-500',
   warning: 'bg-amber-500',
@@ -207,13 +204,10 @@ async function simulateEvent() {
                 <div class="font-mono text-xs text-muted">{{ d.vin }}</div>
               </td>
               <td class="px-3 py-2">
-                <span
-                  class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
-                  :class="isOnline(d) ? onlinePill : offlinePill"
-                >
-                  <span class="h-1.5 w-1.5 rounded-full bg-current" />
-                  {{ isOnline(d) ? t('telematics.online') : t('telematics.offline') }}
-                </span>
+                <StatusBadge
+                  :status="isOnline(d) ? 'active' : 'inactive'"
+                  :label="isOnline(d) ? t('telematics.online') : t('telematics.offline')"
+                />
               </td>
               <td class="px-3 py-2 font-mono text-xs text-app">{{ d.firmware ?? '—' }}</td>
               <td class="px-3 py-2 text-muted">{{ thaiDateTime(d.lastConnectedAt) }}</td>
@@ -264,39 +258,28 @@ async function simulateEvent() {
     </AppCard>
 
     <!-- firmware push modal -->
-    <div
-      v-if="showPush"
-      class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
-      @click.self="closePush"
-    >
-      <div class="w-full max-w-md rounded-2xl border border-app bg-surface p-5 shadow-xl">
-        <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-app">{{ t('telematics.pushFirmware') }}</h2>
-          <button class="text-muted hover:text-app" @click="closePush">✕</button>
+    <AppModal :open="showPush" :title="t('telematics.pushFirmware')" @close="closePush">
+      <div class="space-y-3">
+        <div>
+          <label class="mb-1 block text-xs font-medium text-muted">{{ t('telematics.device') }}</label>
+          <input type="text" :class="fld" :value="pushModel" disabled>
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-muted">{{ t('telematics.firmware') }}</label>
+          <input v-model="fwVersion" type="text" :class="fld" placeholder="v3.9.0">
         </div>
 
-        <div class="space-y-3">
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted">{{ t('telematics.device') }}</label>
-            <input type="text" :class="fld" :value="pushModel" disabled>
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted">{{ t('telematics.firmware') }}</label>
-            <input v-model="fwVersion" type="text" :class="fld" placeholder="v3.9.0">
-          </div>
-
-          <p v-if="formError" class="text-xs text-rose-400">{{ formError }}</p>
-
-          <div class="flex justify-end gap-3 pt-2">
-            <AppButton variant="outline" size="sm" :disabled="submitting" @click="closePush">
-              {{ t('common.cancel') }}
-            </AppButton>
-            <AppButton size="sm" :disabled="submitting" @click="submitPush">
-              {{ t('telematics.pushFirmware') }}
-            </AppButton>
-          </div>
-        </div>
+        <p v-if="formError" class="text-xs text-rose-400">{{ formError }}</p>
       </div>
-    </div>
+
+      <template #footer>
+        <AppButton variant="outline" size="sm" :disabled="submitting" @click="closePush">
+          {{ t('common.cancel') }}
+        </AppButton>
+        <AppButton size="sm" :disabled="submitting" @click="submitPush">
+          {{ t('telematics.pushFirmware') }}
+        </AppButton>
+      </template>
+    </AppModal>
   </div>
 </template>

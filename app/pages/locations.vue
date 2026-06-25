@@ -140,6 +140,20 @@ async function remove(l: StorageLocation) {
 // Shared input field classes (kept in script to avoid a Tailwind @apply block).
 const fld =
   'w-full rounded-lg border border-app bg-surface-2 px-3 py-1.5 text-sm text-app focus:border-brand-600 focus:outline-none'
+
+// DataTable columns. The trailing actions column is shown only when allowed.
+const columns = computed(() => {
+  const cols: { key: string; label: string; mono?: boolean; align?: 'left' | 'right' }[] = [
+    { key: 'warehouse', label: t('locations.warehouse') },
+    { key: 'code', label: t('locations.code') },
+    { key: 'zone', label: t('locations.zone') },
+    { key: 'aisle', label: t('locations.aisle') },
+    { key: 'bin', label: t('locations.bin') },
+    { key: 'active', label: t('locations.active') },
+  ]
+  if (allowed.value) cols.push({ key: 'actions', label: '', align: 'right' })
+  return cols
+})
 </script>
 
 <template>
@@ -175,105 +189,72 @@ const fld =
     </EmptyState>
 
     <!-- locations table -->
-    <AppCard v-if="locations.length > 0">
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b border-app text-left text-xs text-muted">
-              <th class="px-3 py-2 font-medium">{{ t('locations.warehouse') }}</th>
-              <th class="px-3 py-2 font-medium">{{ t('locations.code') }}</th>
-              <th class="px-3 py-2 font-medium">{{ t('locations.zone') }}</th>
-              <th class="px-3 py-2 font-medium">{{ t('locations.aisle') }}</th>
-              <th class="px-3 py-2 font-medium">{{ t('locations.bin') }}</th>
-              <th class="px-3 py-2 font-medium">{{ t('locations.active') }}</th>
-              <th class="px-3 py-2" />
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="l in locations" :key="l.id" class="border-b border-app/60">
-              <td class="px-3 py-2 text-app">{{ l.warehouse }}</td>
-              <td class="px-3 py-2 font-medium text-app">{{ l.code }}</td>
-              <td class="px-3 py-2 text-muted">{{ l.zone ?? '—' }}</td>
-              <td class="px-3 py-2 text-muted">{{ l.aisle ?? '—' }}</td>
-              <td class="px-3 py-2 text-muted">{{ l.bin ?? '—' }}</td>
-              <td class="px-3 py-2">
-                <span
-                  class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
-                  :class="l.active ? 'bg-emerald-500/15 text-emerald-400' : 'bg-zinc-700/40 text-zinc-300'"
-                >
-                  <span class="h-1.5 w-1.5 rounded-full bg-current" />
-                  {{ l.active ? t('locations.active') : t('locations.inactive') }}
-                </span>
-              </td>
-              <td class="px-3 py-2">
-                <div v-if="allowed" class="flex justify-end gap-1.5">
-                  <AppButton variant="outline" size="sm" @click="openEdit(l)">{{ t('common.edit') }}</AppButton>
-                  <AppButton variant="danger" size="sm" @click="remove(l)">{{ t('common.delete') }}</AppButton>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </AppCard>
+    <DataTable v-if="locations.length > 0" :columns="columns" :rows="locations">
+      <template #cell-zone="{ row }">{{ row.zone ?? '—' }}</template>
+      <template #cell-aisle="{ row }">{{ row.aisle ?? '—' }}</template>
+      <template #cell-bin="{ row }">{{ row.bin ?? '—' }}</template>
+      <template #cell-active="{ row }">
+        <StatusBadge
+          :status="row.active ? 'active' : 'inactive'"
+          :label="row.active ? t('locations.active') : t('locations.inactive')"
+        />
+      </template>
+      <template #cell-actions="{ row }">
+        <div class="flex justify-end gap-1.5">
+          <AppButton variant="outline" size="sm" @click="openEdit(row)">{{ t('common.edit') }}</AppButton>
+          <AppButton variant="danger" size="sm" @click="remove(row)">{{ t('common.delete') }}</AppButton>
+        </div>
+      </template>
+    </DataTable>
 
-    <!-- create / edit drawer -->
-    <div
-      v-if="showForm"
-      class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
-      @click.self="closeForm"
+    <!-- create / edit modal -->
+    <AppModal
+      :open="showForm"
+      :title="form.id == null ? t('locations.add') : t('locations.editTitle')"
+      @close="closeForm"
     >
-      <div class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-app bg-surface p-5 shadow-xl">
-        <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-app">
-            {{ form.id == null ? t('locations.add') : t('locations.editTitle') }}
-          </h2>
-          <button class="text-muted hover:text-app" @click="closeForm">✕</button>
+      <div class="space-y-3">
+        <div>
+          <label class="mb-1 block text-xs font-medium text-muted">{{ t('locations.warehouse') }}</label>
+          <input v-model="form.warehouse" type="text" list="wms-warehouse-options" :class="fld">
+          <datalist id="wms-warehouse-options">
+            <option v-for="w in warehouseOptions" :key="w" :value="w" />
+          </datalist>
         </div>
-
-        <div class="space-y-3">
+        <div>
+          <label class="mb-1 block text-xs font-medium text-muted">{{ t('locations.code') }}</label>
+          <input v-model="form.code" type="text" :class="fld">
+        </div>
+        <div class="grid grid-cols-3 gap-3">
           <div>
-            <label class="mb-1 block text-xs font-medium text-muted">{{ t('locations.warehouse') }}</label>
-            <input v-model="form.warehouse" type="text" list="wms-warehouse-options" :class="fld">
-            <datalist id="wms-warehouse-options">
-              <option v-for="w in warehouseOptions" :key="w" :value="w" />
-            </datalist>
+            <label class="mb-1 block text-xs font-medium text-muted">{{ t('locations.zone') }}</label>
+            <input v-model="form.zone" type="text" :class="fld">
           </div>
           <div>
-            <label class="mb-1 block text-xs font-medium text-muted">{{ t('locations.code') }}</label>
-            <input v-model="form.code" type="text" :class="fld">
+            <label class="mb-1 block text-xs font-medium text-muted">{{ t('locations.aisle') }}</label>
+            <input v-model="form.aisle" type="text" :class="fld">
           </div>
-          <div class="grid grid-cols-3 gap-3">
-            <div>
-              <label class="mb-1 block text-xs font-medium text-muted">{{ t('locations.zone') }}</label>
-              <input v-model="form.zone" type="text" :class="fld">
-            </div>
-            <div>
-              <label class="mb-1 block text-xs font-medium text-muted">{{ t('locations.aisle') }}</label>
-              <input v-model="form.aisle" type="text" :class="fld">
-            </div>
-            <div>
-              <label class="mb-1 block text-xs font-medium text-muted">{{ t('locations.bin') }}</label>
-              <input v-model="form.bin" type="text" :class="fld">
-            </div>
-          </div>
-          <label class="flex items-center gap-2 text-sm text-app">
-            <input v-model="form.active" type="checkbox">
-            {{ t('locations.active') }}
-          </label>
-
-          <p v-if="formError" class="text-xs text-rose-400">{{ formError }}</p>
-
-          <div class="flex justify-end gap-3 pt-2">
-            <AppButton variant="outline" size="sm" :disabled="saving" @click="closeForm">
-              {{ t('common.cancel') }}
-            </AppButton>
-            <AppButton size="sm" :disabled="saving" @click="save">
-              {{ saving ? t('locations.saving') : t('common.save') }}
-            </AppButton>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-muted">{{ t('locations.bin') }}</label>
+            <input v-model="form.bin" type="text" :class="fld">
           </div>
         </div>
+        <label class="flex items-center gap-2 text-sm text-app">
+          <input v-model="form.active" type="checkbox">
+          {{ t('locations.active') }}
+        </label>
+
+        <p v-if="formError" class="text-xs text-rose-400">{{ formError }}</p>
       </div>
-    </div>
+
+      <template #footer>
+        <AppButton variant="outline" size="sm" :disabled="saving" @click="closeForm">
+          {{ t('common.cancel') }}
+        </AppButton>
+        <AppButton size="sm" :disabled="saving" @click="save">
+          {{ saving ? t('locations.saving') : t('common.save') }}
+        </AppButton>
+      </template>
+    </AppModal>
   </div>
 </template>

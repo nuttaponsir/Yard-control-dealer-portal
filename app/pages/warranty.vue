@@ -91,17 +91,24 @@ async function voidWarranty(w: Warranty) {
   }
 }
 
-// Inline status pill tones (active/expired/void). Light + dark friendly.
-const pillTone = (s: string) =>
-  s === 'active'
-    ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300'
-    : s === 'void'
-      ? 'bg-rose-500/15 text-rose-600 dark:text-rose-300'
-      : 'bg-zinc-500/15 text-zinc-600 dark:text-zinc-300'
-
 // Shared input field classes (kept in script to avoid a Tailwind @apply block).
 const fld =
   'w-full rounded-lg border border-app bg-surface-2 px-3 py-1.5 text-sm text-app focus:border-brand-600 focus:outline-none'
+
+// DataTable columns. The trailing actions column is admin-only.
+const columns = computed(() => {
+  const cols: { key: string; label: string; mono?: boolean; align?: 'left' | 'right' }[] = [
+    { key: 'warrantyNo', label: t('warranty.warrantyNo') },
+    { key: 'vin', label: t('warranty.vin'), mono: true },
+    { key: 'partSku', label: t('warranty.part') },
+    { key: 'startDate', label: t('warranty.start') },
+    { key: 'expiresAt', label: t('warranty.expires') },
+    { key: 'months', label: t('warranty.months') },
+    { key: 'status', label: t('warranty.status') },
+  ]
+  if (isAdmin.value) cols.push({ key: 'actions', label: '', align: 'right' })
+  return cols
+})
 </script>
 
 <template>
@@ -117,98 +124,55 @@ const fld =
 
     <EmptyState v-if="!loading && warranties.length === 0" icon="🛡️" :title="t('warranty.empty')" />
 
-    <AppCard v-else-if="warranties.length" class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b border-app text-left text-xs text-muted">
-            <th class="px-3 py-2 font-medium">{{ t('warranty.warrantyNo') }}</th>
-            <th class="px-3 py-2 font-medium">{{ t('warranty.vin') }}</th>
-            <th class="px-3 py-2 font-medium">{{ t('warranty.part') }}</th>
-            <th class="px-3 py-2 font-medium">{{ t('warranty.start') }}</th>
-            <th class="px-3 py-2 font-medium">{{ t('warranty.expires') }}</th>
-            <th class="px-3 py-2 font-medium">{{ t('warranty.months') }}</th>
-            <th class="px-3 py-2 font-medium">{{ t('warranty.status') }}</th>
-            <th v-if="isAdmin" class="px-3 py-2" />
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="w in warranties" :key="w.id" class="border-b border-app/60">
-            <td class="px-3 py-2 font-medium text-app">{{ w.warrantyNo }}</td>
-            <td class="px-3 py-2">
-              <code class="rounded bg-surface-2 px-1.5 py-0.5 text-xs text-app">{{ w.vin }}</code>
-            </td>
-            <td class="px-3 py-2 text-app">{{ w.partSku }}</td>
-            <td class="px-3 py-2 text-muted">{{ w.startDate }}</td>
-            <td class="px-3 py-2 text-muted">{{ w.expiresAt }}</td>
-            <td class="px-3 py-2 text-muted">{{ w.months }}</td>
-            <td class="px-3 py-2">
-              <span
-                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
-                :class="pillTone(w.status)"
-              >
-                <span class="h-1.5 w-1.5 rounded-full bg-current" />
-                {{ t('warranty.status.' + w.status) }}
-              </span>
-            </td>
-            <td v-if="isAdmin" class="px-3 py-2 text-right">
-              <AppButton
-                v-if="w.status === 'active'"
-                variant="danger"
-                size="sm"
-                @click="voidWarranty(w)"
-              >
-                {{ t('warranty.status.void') }}
-              </AppButton>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </AppCard>
+    <DataTable v-else-if="warranties.length" :columns="columns" :rows="warranties">
+      <template #cell-status="{ row }">
+        <StatusBadge :status="row.status" :label="t('warranty.status.' + row.status)" />
+      </template>
+      <template #cell-actions="{ row }">
+        <AppButton
+          v-if="row.status === 'active'"
+          variant="danger"
+          size="sm"
+          @click="voidWarranty(row)"
+        >
+          {{ t('warranty.status.void') }}
+        </AppButton>
+      </template>
+    </DataTable>
 
-    <!-- register drawer -->
-    <div
-      v-if="showForm"
-      class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
-      @click.self="closeForm"
-    >
-      <div class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-app bg-surface p-5 shadow-xl">
-        <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-app">{{ t('warranty.register') }}</h2>
-          <button class="text-muted hover:text-app" @click="closeForm">✕</button>
+    <!-- register modal -->
+    <AppModal :open="showForm" :title="t('warranty.register')" @close="closeForm">
+      <div class="space-y-3">
+        <div>
+          <label class="mb-1 block text-xs font-medium text-muted">{{ t('warranty.vin') }}</label>
+          <input v-model="form.vin" type="text" maxlength="17" :class="fld">
         </div>
-
-        <div class="space-y-3">
+        <div>
+          <label class="mb-1 block text-xs font-medium text-muted">{{ t('warranty.part') }}</label>
+          <input v-model="form.partSku" type="text" :class="fld">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="mb-1 block text-xs font-medium text-muted">{{ t('warranty.vin') }}</label>
-            <input v-model="form.vin" type="text" maxlength="17" :class="fld">
+            <label class="mb-1 block text-xs font-medium text-muted">{{ t('warranty.start') }}</label>
+            <input v-model="form.startDate" type="date" :class="fld">
           </div>
           <div>
-            <label class="mb-1 block text-xs font-medium text-muted">{{ t('warranty.part') }}</label>
-            <input v-model="form.partSku" type="text" :class="fld">
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="mb-1 block text-xs font-medium text-muted">{{ t('warranty.start') }}</label>
-              <input v-model="form.startDate" type="date" :class="fld">
-            </div>
-            <div>
-              <label class="mb-1 block text-xs font-medium text-muted">{{ t('warranty.months') }}</label>
-              <input v-model.number="form.months" type="number" min="1" :class="fld">
-            </div>
-          </div>
-
-          <p v-if="formError" class="text-xs text-rose-400">{{ formError }}</p>
-
-          <div class="flex justify-end gap-3 pt-2">
-            <AppButton variant="outline" size="sm" :disabled="saving" @click="closeForm">
-              {{ t('common.cancel') }}
-            </AppButton>
-            <AppButton size="sm" :disabled="saving" @click="save">
-              {{ t('common.save') }}
-            </AppButton>
+            <label class="mb-1 block text-xs font-medium text-muted">{{ t('warranty.months') }}</label>
+            <input v-model.number="form.months" type="number" min="1" :class="fld">
           </div>
         </div>
+
+        <p v-if="formError" class="text-xs text-rose-400">{{ formError }}</p>
       </div>
-    </div>
+
+      <template #footer>
+        <AppButton variant="outline" size="sm" :disabled="saving" @click="closeForm">
+          {{ t('common.cancel') }}
+        </AppButton>
+        <AppButton size="sm" :disabled="saving" @click="save">
+          {{ t('common.save') }}
+        </AppButton>
+      </template>
+    </AppModal>
   </div>
 </template>

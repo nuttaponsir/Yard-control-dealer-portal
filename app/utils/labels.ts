@@ -93,6 +93,33 @@ export const STATUS_TONE: Record<string, string> = {
   assigned: 'bg-amber-500/15 text-amber-400',
   picking: 'bg-indigo-500/15 text-indigo-400',
   picked: 'bg-emerald-500/15 text-emerald-400',
+  // generic active/inactive (locations, masters, devices)
+  active: 'bg-emerald-500/15 text-emerald-400',
+  inactive: 'bg-zinc-700/40 text-zinc-300',
+  // warranty (Phase 5)
+  expiring: 'bg-amber-500/15 text-amber-400',
+  expired: 'bg-rose-500/15 text-rose-400',
+  void: 'bg-zinc-700/40 text-zinc-300',
+  // issues (Phase H)
+  in_progress: 'bg-indigo-500/15 text-indigo-400',
+  resolved: 'bg-emerald-500/15 text-emerald-400',
+  closed: 'bg-zinc-700/40 text-zinc-300',
+  // procurement POs (Phase 5)
+  ordered: 'bg-sky-500/15 text-sky-400',
+  received: 'bg-emerald-500/15 text-emerald-400',
+  // stock-ops (Phase 5): transfers + cycle counts
+  completed: 'bg-emerald-500/15 text-emerald-400',
+  posted: 'bg-emerald-500/15 text-emerald-400',
+  // severity (telematics events / issues)
+  info: 'bg-sky-500/15 text-sky-400',
+  low: 'bg-zinc-700/40 text-zinc-300',
+  medium: 'bg-amber-500/15 text-amber-400',
+  warning: 'bg-amber-500/15 text-amber-400',
+  high: 'bg-rose-500/15 text-rose-400',
+  critical: 'bg-rose-600/20 text-rose-400',
+  error: 'bg-rose-500/15 text-rose-400',
+  // issues lifecycle extra
+  draft: 'bg-zinc-700/40 text-zinc-300',
 }
 
 /** Resolve a Thai label for any known status string (falls back to the input). */

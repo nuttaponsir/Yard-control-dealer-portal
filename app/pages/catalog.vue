@@ -165,7 +165,7 @@ async function checkout() {
 <template>
   <div class="space-y-4">
     <!-- VIN scan bar — ordering entry point (VIN-first) -->
-    <AppCard :title="t('catalog.title')" :subtitle="t('catalog.scan.subtitle')">
+    <AppCard :title="t('catalog.scan.title')" :subtitle="t('catalog.scan.subtitle')">
       <div class="flex flex-wrap gap-2">
         <input
           v-model="vinInput"
@@ -369,11 +369,6 @@ async function checkout() {
     </div>
 
     <!-- success toast -->
-    <div
-      v-if="toast"
-      class="fixed bottom-6 right-6 z-50 rounded-xl border border-emerald-500/30 bg-emerald-500/15 px-4 py-3 text-sm font-semibold text-emerald-300 shadow-lg"
-    >
-      {{ toast }}
-    </div>
+    <AppToast :message="toast" />
   </div>
 </template>

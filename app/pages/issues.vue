@@ -4,7 +4,7 @@
 // by the global auth middleware via useNav (roles: ['admin']).
 import { computed, ref } from 'vue'
 import type { IssueListRow } from '~/../server/api/issues/index.get'
-import type { Issue, IssueStatus, IssueSeverity } from '~/types'
+import type { Issue, IssueStatus } from '~/types'
 
 const { t } = useI18n()
 usePageTitle().set(t('page.issues.title'), t('page.issues.subtitle'))
@@ -17,18 +17,6 @@ const STATUS_LABEL: Record<IssueStatus, string> = {
   in_progress: 'In progress',
   resolved: 'Resolved',
   closed: 'Closed',
-}
-const STATUS_TONE: Record<IssueStatus, string> = {
-  draft: 'bg-amber-500/15 text-amber-300',
-  open: 'bg-sky-500/15 text-sky-300',
-  in_progress: 'bg-indigo-500/15 text-indigo-300',
-  resolved: 'bg-emerald-500/15 text-emerald-300',
-  closed: 'bg-zinc-500/15 text-zinc-400',
-}
-const SEVERITY_TONE: Record<IssueSeverity, string> = {
-  error: 'bg-rose-500/15 text-rose-300',
-  warning: 'bg-amber-500/15 text-amber-300',
-  info: 'bg-sky-500/15 text-sky-300',
 }
 
 // ---- data ------------------------------------------------------------------
@@ -160,14 +148,10 @@ const prettyDetail = computed(() => {
         </template>
         <template #cell-userEmail="{ value }">{{ value ?? '—' }}</template>
         <template #cell-severity="{ value }">
-          <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="SEVERITY_TONE[value as IssueSeverity]">
-            {{ value }}
-          </span>
+          <StatusBadge :status="value" :label="value" />
         </template>
         <template #cell-status="{ value }">
-          <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="STATUS_TONE[value as IssueStatus]">
-            {{ STATUS_LABEL[value as IssueStatus] }}
-          </span>
+          <StatusBadge :status="value" :label="STATUS_LABEL[value as IssueStatus]" />
         </template>
         <template #cell-createdAt="{ value }">
           <span class="text-xs text-muted">{{ thaiTime(value) }}</span>
@@ -277,11 +261,6 @@ const prettyDetail = computed(() => {
     </div>
 
     <!-- toast -->
-    <div
-      v-if="toast"
-      class="fixed bottom-6 right-6 z-[60] rounded-xl border border-emerald-500/30 bg-emerald-500/15 px-4 py-3 text-sm font-semibold text-emerald-300 shadow-lg"
-    >
-      {{ toast }}
-    </div>
+    <AppToast :message="toast" />
   </div>
 </template>

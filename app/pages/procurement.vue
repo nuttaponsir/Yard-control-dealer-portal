@@ -238,20 +238,13 @@ async function receiveAll() {
 const fld =
   'w-full rounded-lg border border-app bg-surface-2 px-3 py-1.5 text-sm text-app focus:border-brand-600 focus:outline-none'
 
-const statusClass = (s: PurchaseOrderStatus) => {
-  switch (s) {
-    case 'received':
-      return 'bg-emerald-600/20 text-emerald-300'
-    case 'partial':
-      return 'bg-amber-600/20 text-amber-300'
-    case 'cancelled':
-      return 'bg-rose-600/20 text-rose-300'
-    case 'ordered':
-      return 'bg-brand-600/20 text-brand-300'
-    default:
-      return 'bg-surface-2 text-muted'
-  }
-}
+// Columns for the PO detail items table (rendered via DataTable).
+const detailColumns = computed(() => [
+  { key: 'part', label: t('procurement.part') },
+  { key: 'qtyOrdered', label: t('procurement.qtyOrdered'), align: 'right' as const },
+  { key: 'qtyReceived', label: t('procurement.qtyReceived'), align: 'right' as const },
+  { key: 'unitCost', label: t('procurement.unitCost'), align: 'right' as const },
+])
 </script>
 
 <template>
@@ -289,9 +282,7 @@ const statusClass = (s: PurchaseOrderStatus) => {
             <td class="px-4 py-2.5 text-app">{{ po.supplierName }}</td>
             <td class="px-4 py-2.5 text-muted">{{ po.warehouse }}</td>
             <td class="px-4 py-2.5">
-              <span class="rounded-full px-2 py-0.5 text-[11px]" :class="statusClass(po.status)">
-                {{ statusLabel(po.status) }}
-              </span>
+              <StatusBadge :status="po.status" :label="statusLabel(po.status)" />
             </td>
             <td class="px-4 py-2.5 text-right text-app">{{ thb(po.totalCost) }}</td>
             <td class="px-4 py-2.5 text-right text-muted">{{ po.itemCount }}</td>
@@ -301,17 +292,7 @@ const statusClass = (s: PurchaseOrderStatus) => {
     </div>
 
     <!-- create drawer -->
-    <div
-      v-if="showForm"
-      class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
-      @click.self="closeForm"
-    >
-      <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-app bg-surface p-5 shadow-xl">
-        <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-app">{{ t('procurement.create') }}</h2>
-          <button class="text-muted hover:text-app" @click="closeForm">✕</button>
-        </div>
-
+    <AppModal :open="showForm" :title="t('procurement.create')" max-width="max-w-2xl" @close="closeForm">
         <div class="space-y-3">
           <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
@@ -379,31 +360,23 @@ const statusClass = (s: PurchaseOrderStatus) => {
           </div>
 
           <p v-if="formError" class="text-xs text-rose-400">{{ formError }}</p>
-
-          <div class="flex justify-end gap-3 pt-2">
-            <AppButton variant="outline" size="sm" :disabled="saving" @click="closeForm">
-              {{ t('common.cancel') }}
-            </AppButton>
-            <AppButton size="sm" :disabled="saving" @click="save">{{ t('common.save') }}</AppButton>
-          </div>
         </div>
-      </div>
-    </div>
+
+      <template #footer>
+        <AppButton variant="outline" size="sm" :disabled="saving" @click="closeForm">
+          {{ t('common.cancel') }}
+        </AppButton>
+        <AppButton size="sm" :disabled="saving" @click="save">{{ t('common.save') }}</AppButton>
+      </template>
+    </AppModal>
 
     <!-- detail drawer -->
-    <div
-      v-if="showDetail"
-      class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
-      @click.self="closeDetail"
+    <AppModal
+      :open="showDetail"
+      :title="detail?.purchaseOrder.poNumber ?? t('procurement.poNumber')"
+      max-width="max-w-2xl"
+      @close="closeDetail"
     >
-      <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-app bg-surface p-5 shadow-xl">
-        <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-app">
-            {{ detail?.purchaseOrder.poNumber ?? t('procurement.poNumber') }}
-          </h2>
-          <button class="text-muted hover:text-app" @click="closeDetail">✕</button>
-        </div>
-
         <p v-if="detailLoading" class="text-sm text-muted">…</p>
         <p v-if="detailError" class="text-xs text-rose-400">{{ detailError }}</p>
 
@@ -411,35 +384,17 @@ const statusClass = (s: PurchaseOrderStatus) => {
           <div class="grid grid-cols-2 gap-2 text-sm">
             <div><span class="text-muted">{{ t('procurement.supplier') }}: </span><span class="text-app">{{ detail.supplierName }}</span></div>
             <div><span class="text-muted">{{ t('procurement.warehouse') }}: </span><span class="text-app">{{ detail.purchaseOrder.warehouse }}</span></div>
-            <div>
+            <div class="flex items-center gap-1">
               <span class="text-muted">{{ t('procurement.status') }}: </span>
-              <span class="rounded-full px-2 py-0.5 text-[11px]" :class="statusClass(detail.purchaseOrder.status)">
-                {{ statusLabel(detail.purchaseOrder.status) }}
-              </span>
+              <StatusBadge :status="detail.purchaseOrder.status" :label="statusLabel(detail.purchaseOrder.status)" />
             </div>
             <div><span class="text-muted">{{ t('procurement.total') }}: </span><span class="text-app">{{ thb(detail.purchaseOrder.totalCost) }}</span></div>
           </div>
 
-          <div class="overflow-x-auto rounded-xl border border-app">
-            <table class="w-full text-sm">
-              <thead class="text-left text-xs text-muted">
-                <tr class="border-b border-app">
-                  <th class="px-3 py-2">{{ t('procurement.part') }}</th>
-                  <th class="px-3 py-2 text-right">{{ t('procurement.qtyOrdered') }}</th>
-                  <th class="px-3 py-2 text-right">{{ t('procurement.qtyReceived') }}</th>
-                  <th class="px-3 py-2 text-right">{{ t('procurement.unitCost') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="it in detail.items" :key="it.id" class="border-b border-app/60">
-                  <td class="px-3 py-2 text-app">{{ it.partSku }} — {{ it.partName }}</td>
-                  <td class="px-3 py-2 text-right text-app">{{ it.qtyOrdered }}</td>
-                  <td class="px-3 py-2 text-right text-app">{{ it.qtyReceived }}</td>
-                  <td class="px-3 py-2 text-right text-muted">{{ thb(it.unitCost) }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <DataTable :columns="detailColumns" :rows="detail.items">
+            <template #cell-part="{ row }">{{ row.partSku }} — {{ row.partName }}</template>
+            <template #cell-unitCost="{ value }">{{ thb(value as number) }}</template>
+          </DataTable>
 
           <div v-if="canReceive" class="flex justify-end">
             <AppButton size="sm" :disabled="receiving" @click="receiveAll">
@@ -447,7 +402,6 @@ const statusClass = (s: PurchaseOrderStatus) => {
             </AppButton>
           </div>
         </div>
-      </div>
-    </div>
+    </AppModal>
   </div>
 </template>

@@ -191,6 +191,27 @@ function cStatusLabel(s: CycleCountStatus): string {
 const fld =
   'w-full rounded-lg border border-app bg-surface-2 px-3 py-1.5 text-sm text-app focus:border-brand-600 focus:outline-none'
 const tabBtn = 'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors'
+
+// DataTable column defs.
+const transferColumns = computed(() => [
+  { key: 'transferNo', label: t('stockOps.transferNo'), mono: true },
+  { key: 'part', label: t('stockOps.part') },
+  { key: 'fromWarehouse', label: t('stockOps.from') },
+  { key: 'toWarehouse', label: t('stockOps.to') },
+  { key: 'qty', label: t('stockOps.qty'), align: 'right' as const },
+  { key: 'status', label: t('stockOps.status') },
+  { key: 'actions', label: '', align: 'right' as const },
+])
+const countColumns = computed(() => [
+  { key: 'countNo', label: t('stockOps.countNo'), mono: true },
+  { key: 'part', label: t('stockOps.part') },
+  { key: 'warehouse', label: t('stockOps.warehouse') },
+  { key: 'systemQty', label: t('stockOps.systemQty'), align: 'right' as const },
+  { key: 'countedQty', label: t('stockOps.countedQty'), align: 'right' as const },
+  { key: 'variance', label: t('stockOps.variance'), align: 'right' as const },
+  { key: 'status', label: t('stockOps.status') },
+  { key: 'actions', label: '', align: 'right' as const },
+])
 </script>
 
 <template>
@@ -220,41 +241,23 @@ const tabBtn = 'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors'
       <p v-if="trError" class="mb-3 text-xs text-rose-400">{{ trError }}</p>
 
       <EmptyState v-if="!transfers.length" icon="🔁" :title="t('stockOps.empty')" />
-      <div v-else class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
-          <thead>
-            <tr class="border-b border-app text-xs text-muted">
-              <th class="px-3 py-2 font-medium">{{ t('stockOps.transferNo') }}</th>
-              <th class="px-3 py-2 font-medium">{{ t('stockOps.part') }}</th>
-              <th class="px-3 py-2 font-medium">{{ t('stockOps.from') }}</th>
-              <th class="px-3 py-2 font-medium">{{ t('stockOps.to') }}</th>
-              <th class="px-3 py-2 text-right font-medium">{{ t('stockOps.qty') }}</th>
-              <th class="px-3 py-2 font-medium">{{ t('stockOps.status') }}</th>
-              <th class="px-3 py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="tr in transfers" :key="tr.id" class="border-b border-app/60">
-              <td class="px-3 py-2 font-mono text-xs text-app">{{ tr.transferNo }}</td>
-              <td class="px-3 py-2 text-app">{{ partLabel(tr.partSku, tr.partName, tr.partId) }}</td>
-              <td class="px-3 py-2 text-muted">{{ tr.fromWarehouse }}</td>
-              <td class="px-3 py-2 text-muted">{{ tr.toWarehouse }}</td>
-              <td class="px-3 py-2 text-right font-semibold text-app">{{ tr.qty }}</td>
-              <td class="px-3 py-2 text-app">{{ tStatusLabel(tr.status) }}</td>
-              <td class="px-3 py-2 text-right">
-                <AppButton
-                  v-if="tr.status === 'requested'"
-                  size="sm"
-                  :disabled="busyTransferId === tr.id"
-                  @click="completeTransfer(tr)"
-                >
-                  {{ t('stockOps.complete') }}
-                </AppButton>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <DataTable v-else :columns="transferColumns" :rows="transfers">
+        <template #cell-part="{ row }">{{ partLabel(row.partSku, row.partName, row.partId) }}</template>
+        <template #cell-qty="{ row }"><span class="font-semibold">{{ row.qty }}</span></template>
+        <template #cell-status="{ row }">
+          <StatusBadge :status="row.status" :label="tStatusLabel(row.status)" />
+        </template>
+        <template #cell-actions="{ row }">
+          <AppButton
+            v-if="row.status === 'requested'"
+            size="sm"
+            :disabled="busyTransferId === row.id"
+            @click="completeTransfer(row)"
+          >
+            {{ t('stockOps.complete') }}
+          </AppButton>
+        </template>
+      </DataTable>
     </AppCard>
 
     <!-- ===== COUNTS TAB ===== -->
@@ -266,150 +269,110 @@ const tabBtn = 'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors'
       <p v-if="cnError" class="mb-3 text-xs text-rose-400">{{ cnError }}</p>
 
       <EmptyState v-if="!counts.length" icon="📋" :title="t('stockOps.empty')" />
-      <div v-else class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
-          <thead>
-            <tr class="border-b border-app text-xs text-muted">
-              <th class="px-3 py-2 font-medium">{{ t('stockOps.countNo') }}</th>
-              <th class="px-3 py-2 font-medium">{{ t('stockOps.part') }}</th>
-              <th class="px-3 py-2 font-medium">{{ t('stockOps.warehouse') }}</th>
-              <th class="px-3 py-2 text-right font-medium">{{ t('stockOps.systemQty') }}</th>
-              <th class="px-3 py-2 text-right font-medium">{{ t('stockOps.countedQty') }}</th>
-              <th class="px-3 py-2 text-right font-medium">{{ t('stockOps.variance') }}</th>
-              <th class="px-3 py-2 font-medium">{{ t('stockOps.status') }}</th>
-              <th class="px-3 py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="c in counts" :key="c.id" class="border-b border-app/60">
-              <td class="px-3 py-2 font-mono text-xs text-app">{{ c.countNo }}</td>
-              <td class="px-3 py-2 text-app">{{ partLabel(c.partSku, c.partName, c.partId) }}</td>
-              <td class="px-3 py-2 text-muted">{{ c.warehouse }}</td>
-              <td class="px-3 py-2 text-right text-app">{{ c.systemQty }}</td>
-              <td class="px-3 py-2 text-right text-app">{{ c.countedQty }}</td>
-              <td
-                class="px-3 py-2 text-right font-semibold"
-                :class="c.variance > 0 ? 'text-emerald-400' : c.variance < 0 ? 'text-rose-400' : 'text-muted'"
-              >
-                {{ c.variance > 0 ? `+${c.variance}` : c.variance }}
-              </td>
-              <td class="px-3 py-2 text-app">{{ cStatusLabel(c.status) }}</td>
-              <td class="px-3 py-2 text-right">
-                <AppButton
-                  v-if="c.status === 'open'"
-                  size="sm"
-                  :disabled="busyCountId === c.id"
-                  @click="postCount(c)"
-                >
-                  {{ t('stockOps.post') }}
-                </AppButton>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <DataTable v-else :columns="countColumns" :rows="counts">
+        <template #cell-part="{ row }">{{ partLabel(row.partSku, row.partName, row.partId) }}</template>
+        <template #cell-variance="{ row }">
+          <span
+            class="font-semibold"
+            :class="row.variance > 0 ? 'text-emerald-400' : row.variance < 0 ? 'text-rose-400' : 'text-muted'"
+          >
+            {{ row.variance > 0 ? `+${row.variance}` : row.variance }}
+          </span>
+        </template>
+        <template #cell-status="{ row }">
+          <StatusBadge :status="row.status" :label="cStatusLabel(row.status)" />
+        </template>
+        <template #cell-actions="{ row }">
+          <AppButton
+            v-if="row.status === 'open'"
+            size="sm"
+            :disabled="busyCountId === row.id"
+            @click="postCount(row)"
+          >
+            {{ t('stockOps.post') }}
+          </AppButton>
+        </template>
+      </DataTable>
     </AppCard>
 
     <!-- transfer create modal -->
-    <div
-      v-if="showTransfer"
-      class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
-      @click.self="showTransfer = false"
-    >
-      <div class="w-full max-w-md rounded-2xl border border-app bg-surface p-5 shadow-xl">
-        <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-app">{{ t('stockOps.createTransfer') }}</h2>
-          <button class="text-muted hover:text-app" @click="showTransfer = false">✕</button>
+    <AppModal :open="showTransfer" :title="t('stockOps.createTransfer')" @close="showTransfer = false">
+      <div class="space-y-3">
+        <div>
+          <label class="mb-1 block text-xs font-medium text-muted">{{ t('stockOps.part') }}</label>
+          <select v-model.number="trPartId" :class="fld">
+            <option v-for="p in parts" :key="p.id" :value="p.id">{{ p.sku }} — {{ p.name }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-muted">{{ t('stockOps.from') }}</label>
+          <select v-model="trFrom" :class="fld">
+            <option v-for="w in WAREHOUSES" :key="w" :value="w">{{ w }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-muted">{{ t('stockOps.to') }}</label>
+          <select v-model="trTo" :class="fld">
+            <option v-for="w in WAREHOUSES" :key="w" :value="w">{{ w }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-muted">{{ t('stockOps.qty') }}</label>
+          <input v-model.number="trQty" type="number" min="1" :class="fld">
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-muted">{{ t('movements.note') }}</label>
+          <input v-model="trNote" type="text" :class="fld">
         </div>
 
-        <div class="space-y-3">
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted">{{ t('stockOps.part') }}</label>
-            <select v-model.number="trPartId" :class="fld">
-              <option v-for="p in parts" :key="p.id" :value="p.id">{{ p.sku }} — {{ p.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted">{{ t('stockOps.from') }}</label>
-            <select v-model="trFrom" :class="fld">
-              <option v-for="w in WAREHOUSES" :key="w" :value="w">{{ w }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted">{{ t('stockOps.to') }}</label>
-            <select v-model="trTo" :class="fld">
-              <option v-for="w in WAREHOUSES" :key="w" :value="w">{{ w }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted">{{ t('stockOps.qty') }}</label>
-            <input v-model.number="trQty" type="number" min="1" :class="fld">
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted">{{ t('movements.note') }}</label>
-            <input v-model="trNote" type="text" :class="fld">
-          </div>
-
-          <p v-if="trError" class="text-xs text-rose-400">{{ trError }}</p>
-
-          <div class="flex justify-end gap-3 pt-2">
-            <AppButton variant="outline" size="sm" :disabled="trSubmitting" @click="showTransfer = false">
-              {{ t('common.cancel') }}
-            </AppButton>
-            <AppButton size="sm" :disabled="trSubmitting" @click="submitTransfer">
-              {{ t('common.save') }}
-            </AppButton>
-          </div>
-        </div>
+        <p v-if="trError" class="text-xs text-rose-400">{{ trError }}</p>
       </div>
-    </div>
+
+      <template #footer>
+        <AppButton variant="outline" size="sm" :disabled="trSubmitting" @click="showTransfer = false">
+          {{ t('common.cancel') }}
+        </AppButton>
+        <AppButton size="sm" :disabled="trSubmitting" @click="submitTransfer">
+          {{ t('common.save') }}
+        </AppButton>
+      </template>
+    </AppModal>
 
     <!-- count create modal -->
-    <div
-      v-if="showCount"
-      class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
-      @click.self="showCount = false"
-    >
-      <div class="w-full max-w-md rounded-2xl border border-app bg-surface p-5 shadow-xl">
-        <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-app">{{ t('stockOps.createCount') }}</h2>
-          <button class="text-muted hover:text-app" @click="showCount = false">✕</button>
+    <AppModal :open="showCount" :title="t('stockOps.createCount')" @close="showCount = false">
+      <div class="space-y-3">
+        <div>
+          <label class="mb-1 block text-xs font-medium text-muted">{{ t('stockOps.part') }}</label>
+          <select v-model.number="cnPartId" :class="fld">
+            <option v-for="p in parts" :key="p.id" :value="p.id">{{ p.sku }} — {{ p.name }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-muted">{{ t('stockOps.warehouse') }}</label>
+          <select v-model="cnWarehouse" :class="fld">
+            <option v-for="w in WAREHOUSES" :key="w" :value="w">{{ w }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-muted">{{ t('stockOps.countedQty') }}</label>
+          <input v-model.number="cnCountedQty" type="number" min="0" :class="fld">
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-muted">{{ t('movements.note') }}</label>
+          <input v-model="cnNote" type="text" :class="fld">
         </div>
 
-        <div class="space-y-3">
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted">{{ t('stockOps.part') }}</label>
-            <select v-model.number="cnPartId" :class="fld">
-              <option v-for="p in parts" :key="p.id" :value="p.id">{{ p.sku }} — {{ p.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted">{{ t('stockOps.warehouse') }}</label>
-            <select v-model="cnWarehouse" :class="fld">
-              <option v-for="w in WAREHOUSES" :key="w" :value="w">{{ w }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted">{{ t('stockOps.countedQty') }}</label>
-            <input v-model.number="cnCountedQty" type="number" min="0" :class="fld">
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted">{{ t('movements.note') }}</label>
-            <input v-model="cnNote" type="text" :class="fld">
-          </div>
-
-          <p v-if="cnError" class="text-xs text-rose-400">{{ cnError }}</p>
-
-          <div class="flex justify-end gap-3 pt-2">
-            <AppButton variant="outline" size="sm" :disabled="cnSubmitting" @click="showCount = false">
-              {{ t('common.cancel') }}
-            </AppButton>
-            <AppButton size="sm" :disabled="cnSubmitting" @click="submitCount">
-              {{ t('common.save') }}
-            </AppButton>
-          </div>
-        </div>
+        <p v-if="cnError" class="text-xs text-rose-400">{{ cnError }}</p>
       </div>
-    </div>
+
+      <template #footer>
+        <AppButton variant="outline" size="sm" :disabled="cnSubmitting" @click="showCount = false">
+          {{ t('common.cancel') }}
+        </AppButton>
+        <AppButton size="sm" :disabled="cnSubmitting" @click="submitCount">
+          {{ t('common.save') }}
+        </AppButton>
+      </template>
+    </AppModal>
   </div>
 </template>
