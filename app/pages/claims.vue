@@ -245,7 +245,7 @@ function fmtDate(iso: string) {
                   >
                     <option value="">{{ t('claims.manage.noResolution') }}</option>
                     <option v-for="r in resolutions" :key="r.code" :value="r.code">
-                      {{ r.nameTh }}{{ r.refundable ? ` (${t('claims.manage.refundHint')})` : '' }}
+                      {{ r.nameTh }}
                     </option>
                   </select>
                 </label>

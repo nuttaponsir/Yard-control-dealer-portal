@@ -449,7 +449,6 @@ export const en: Record<string, string> = {
   'claims.manage.status': 'Status',
   'claims.manage.resolution': 'Resolution',
   'claims.manage.noResolution': '— not set —',
-  'claims.manage.refundHint': 'refund',
   'claims.manage.refundNote': 'Choosing refund auto-creates a return (RMA) record.',
   'claims.manage.viewRma': 'View return',
 

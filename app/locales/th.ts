@@ -450,7 +450,6 @@ export const th: Record<string, string> = {
   'claims.manage.status': 'สถานะ',
   'claims.manage.resolution': 'ประเภทการแก้ไข',
   'claims.manage.noResolution': '— ยังไม่ระบุ —',
-  'claims.manage.refundHint': 'คืนเงิน',
   'claims.manage.refundNote': 'เลือกคืนเงิน ระบบจะสร้างรายการคืนสินค้า (RMA) ให้อัตโนมัติ',
   'claims.manage.viewRma': 'ดูรายการคืนสินค้า',
 
